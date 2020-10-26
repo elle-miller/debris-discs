@@ -17,10 +17,9 @@ def initialGas(s, IniBumpPeakPos, A, width):
     bump width scale factor
     """
     r = s.grid.r
-    sig_g = (r / s.ini.gas.SigmaRc) ** -s.ini.gas.SigmaExp * np.exp(-(r / s.ini.gas.SigmaRc) ** (2-s.ini.gas.SigmaExp))
+    SigmaGas = (r / s.ini.gas.SigmaRc) ** -s.ini.gas.SigmaExp * np.exp(-(r / s.ini.gas.SigmaRc) ** (2-s.ini.gas.SigmaExp))
     M_gas = s.ini.gas.Mdisk * s.ini.star.M / (s.ini.dust.d2gRatio + 1.)  # total gas mass for given d2g
-    s.ini.gas.Sigma0 = M_gas / np.trapz(2 * np.pi * r * sig_g, x=r)
-    SigmaGas = (r / s.ini.gas.SigmaR0) ** -s.ini.gas.SigmaExp * np.exp(-(r/s.ini.gas.SigmaR0) ** (2-s.ini.gas.SigmaExp))
+    s.ini.gas.Sigma0 = M_gas / np.trapz(2 * np.pi * r * SigmaGas, x=r)
     BumpPeakPos = getPeakPosition(s, IniBumpPeakPos=IniBumpPeakPos, TimeBumpForm=0, BumpVelFactor=0)
     iniGas = Gauss(s, r, BumpPeakPos, A, width) * s.ini.gas.Sigma0 * SigmaGas
     return iniGas

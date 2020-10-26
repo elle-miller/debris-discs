@@ -1,11 +1,10 @@
-
+import dustpy.std.sim as std_sim
 import numpy as np
 
 
 ##################### OTHER FUNCTIONS #########################################
 
 
-# Function that calculates what we need and is executed once per timestep
 # We transform some of the dust into planetesimals as soon as the dust to gas
 # ratio is above a certain threshold
 # This caculates the change rates for all dust species and the planetismal
@@ -63,4 +62,4 @@ def dustSources(s):
 
 
 def addPlanetesimals(s):
-    s.dust.SigmaPlan += s.dt * s.dust.dSigmaPlan
+    s.dust.SigmaPlan += s.t.stepsize * s.dust.dSigmaPlan

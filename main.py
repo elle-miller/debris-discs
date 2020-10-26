@@ -6,9 +6,12 @@
 # Main file for program to evolve a protoplanetary disc under initial conditions
 # To run:
 # python main.py -flag1 val1 -flag2 val2 etc.
+# Example script with dust evolution turned off
+# python main.py -e 1e4 -n 5 -3 1 -2 0
 
 from dustpy.simulation import Simulation
 from dustpy import constants as c
+from dustpy import plot
 from functionsMovingBump import alphaBumps, initialGas
 from functionsPlanFormation import setPlanetesimalFormation, dustSources, addPlanetesimals
 import numpy as np
@@ -35,7 +38,7 @@ def main(args):
     s.initialize()
 
     # Bind initial gas profile
-    s.gas.update(initialGas(s, args.iniBumpPeakPos * c.au, args.amplitude, args.width))
+    s.gas.Sigma = initialGas(s, args.iniBumpPeakPos * c.au, args.amplitude, args.width)
     s.ini.dust.allowDriftLimitedParticles = True
     s.initialize()
 
@@ -45,6 +48,10 @@ def main(args):
     # Run the simulation
     print("Evolving...")
     s.run()
+
+    # Plot planel of results
+    if args.panel:
+        plot.panel(s.writer.datadir)
 
 
 ##################### OTHER FUNCTIONS #########################################
@@ -124,10 +131,11 @@ def setPlanForm(s):
     ---------
     s: Instance of the Simulation class
     """
+
     # The functions we created above use fields that do not exist in a DustPy a-priori
     # We need to create the grids before the initialization
-    s.dust.dSigmaDust = np.zeros((s.grid.Nr, s.grid.Nm))
-    s.dust.SigmaPlan = np.ones(s.grid.Nr) * 1.e-100
+    s.dust.dSigmaDust = np.zeros((s.ini.grid.Nr, s.ini.grid.Nm))
+    s.dust.SigmaPlan = np.ones(s.ini.grid.Nr) * 1.e-100
 
     # Calculate dust sources
     s.dust.updater.systole = setPlanetesimalFormation(s)
@@ -214,6 +222,7 @@ if __name__ == "__main__":
     parser.add_argument('-x', action="store", dest="massMax", type=float, default=1e5, help="Max mass")
     parser.add_argument('-1', action="store", dest="gasEvolution", type=int, default=1, help="Create bump via alpha")
     parser.add_argument('-2', action="store", dest="dustEvolution", type=int, default=1, help="Advect/diffus transport")
+    parser.add_argument('-3', action="store", dest="panel", type=int, default=0, help="Plot panel output")
     parser.add_argument('-4', action="store", dest="dustSolver", type=str, default="EXPL_EULER", help="EXPL_EULER")
     arguments = parser.parse_args()
     main(arguments)
