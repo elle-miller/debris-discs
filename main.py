@@ -3,6 +3,7 @@
 
 ###############################################################################
 # main.py
+# Author: Elle Miller
 # Main file for program to evolve a protoplanetary disc under initial conditions
 # To run:
 # python main.py -flag1 val1 -flag2 val2 etc.
@@ -28,7 +29,8 @@ def main(args):
     setInitConds(s, args, verbose=True)
 
     # Bind systoles and diastoles for planetesimal formation
-    setPlanForm(s)
+    if args.planForm:
+        setPlanForm(s)
 
     # Bind alpha bump function to create gas gap
     s.gas.alpha.update(alphaBumps(s, args.iniBumpPeakPos * c.au, args.amplitude, args.width, args.timeBumpForm,
@@ -105,7 +107,7 @@ def setInitConds(s, args, verbose):
         print("minyear = %d" % args.minyear)
         print("maxyear = %d" % args.maxyear)
         print("nsnap = %d" % args.nsnap)
-        print("dustSolver = %s" % args.dustSolver)
+        print("planForm = %s" % args.planForm)
         print("alpha = %f" % args.alpha)
         print("amplitude = %f" % args.amplitude)
         print("bumpVelFactor = %d" % args.bumpVelFactor)
@@ -223,6 +225,6 @@ if __name__ == "__main__":
     parser.add_argument('-1', action="store", dest="gasEvolution", type=int, default=1, help="Create bump via alpha")
     parser.add_argument('-2', action="store", dest="dustEvolution", type=int, default=1, help="Advect/diffus transport")
     parser.add_argument('-3', action="store", dest="panel", type=int, default=0, help="Plot panel output")
-    parser.add_argument('-4', action="store", dest="dustSolver", type=str, default="EXPL_EULER", help="EXPL_EULER")
+    parser.add_argument('-4', action="store", dest="planForm", type=int, default="1", help="Planetesimal formation")
     arguments = parser.parse_args()
     main(arguments)

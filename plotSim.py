@@ -15,11 +15,13 @@ def main(args):
 
     datadir = localDir + '/sims/' + str(args.z)
     data = hdf5writer.read.all(datadir)
-    plt.semilogx(data.t/c.year, data.dust.Sigma/c.au)
-    plt.semilogx(data.t/c.year, data.gas.Sigma/c.au)
     plt.xlabel("Time [yr]")
     plt.ylabel("Surface Density [g/cm3]")
-    plt.draw()
+    totdust = np.sum(data.dust.Sigma, axis=(1, 2)) / c.au
+    totgas = np.sum(data.gas.Sigma, axis=1) / c.au
+    plt.semilogx(data.t / c.year, totdust)
+    plt.semilogx(data.t / c.year, totgas)
+    plt.show()
 
 
 if __name__ == "__main__":
