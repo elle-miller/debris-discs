@@ -40,12 +40,34 @@ def main(args):
     s.initialize()
 
     # Bind initial gas profile
-    s.gas.Sigma = initialGas(s, args.iniBumpPeakPos * c.au, args.amplitude, args.width)
+    s.ini.gas.Sigma = initialGas(s, args.iniBumpPeakPos * c.au, args.amplitude, args.width)
     s.ini.dust.allowDriftLimitedParticles = True
     s.initialize()
 
     # Specify where to put the data and simulation related info
     setSimulationParams(s, args)
+
+    # Exlcude attributes to save space in simulation
+    s.dust.backreaction.save = False
+    s.dust.S.coag.save = False
+    s.dust.p.frag.save = False
+    s.dust.p.stick.save = False
+    s.dust.v.rel.save = False
+    if not args.dustEvolution:
+        s.dust.H.save = False
+        s.dust.SigmaFloor.save = False
+        s.dust.v.rad.save = False
+        s.dust.D.save = False
+
+    # Haven't found: dust/jac, dust/kFrag, dust/kStick
+    # if s.pars.dustCoagulation and s.pars.dustAdvection:
+    #     s.pars.excludeAttr = ['dust/backReactCoeff', 'dust/coagSources', 'dust/cFrag',
+    #                           'dust/cStick', 'dust/jac', 'dust/kFrag', 'dust/kStick', 'dust/vRel']
+    # else:
+    #     s.pars.excludeAttr = ['dust/backReactCoeff', 'dust/coagSources', 'dust/cFrag',
+    #                           'dust/cStick', 'dust/jac', 'dust/kFrag', 'dust/kStick', 'dust/vRel',
+    #                           'dust/Diff', 'dust/DiffInt', 'dust/SigmaFloor', 'dust/h', 'dust/vRad',
+    #                           'dust/vRadInt']
 
     # Run the simulation
     print("Evolving...")
@@ -92,7 +114,7 @@ def setInitConds(s, args, verbose):
     s.ini.gas.Mdisk = args.MdiskInMstar * c.M_sun
     s.ini.gas.alpha = args.alpha * np.ones_like(s.grid.r)
 
-    # Dust
+    # Dust (d2g ratio is dust.eps)
     s.ini.dust.aIniMax = args.aIniMax
     s.ini.dust.deltaRad = s.ini.gas.alpha  # radial particle diffusion
     s.ini.dust.deltaTurb = s.ini.gas.alpha  # relative velocitiy turbulence
@@ -210,7 +232,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', action="store", dest="minyear", type=float, default=0, help="Beginning year")
     parser.add_argument('-e', action="store", dest="maxyear", type=float, default=10e6, help="Ending year")
     parser.add_argument('-n', action="store", dest="nsnap", type=int, default=100, help="Number of snapshots")
-    parser.add_argument('-r', action="store", dest="Nr", type=int, default=300, help="Number of radial bins")
+    parser.add_argument('-r', action="store", dest="Nr", type=int, default=100, help="Number of radial bins")
     parser.add_argument('-m', action="store", dest="Nm", type=int, default=120, help="Number of mass bins")
     parser.add_argument('-o', action="store", dest="starmass", type=float, default=1, help="Star Mass in solar units")
     parser.add_argument('-a', action="store", dest="alpha", type=float, default=0.001, help="Viscosity parameter")

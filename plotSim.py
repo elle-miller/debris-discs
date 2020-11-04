@@ -6,22 +6,81 @@ import numpy as np
 import argparse
 import matplotlib.pyplot as plt
 
-
 # Global settings
+M_earth = 5.9722e24 * 1e3  # [g]
 localDir = '/media/elle/Seagate Backup Plus Drive/2020/mpia/debris-discs'
+colWidth = 244  # pt
+fontsize = 12
+labelsize = 14
+length = 3
+width = 0.5
+fig_width_pt = colWidth  # Get this from LaTeX using \showthe\columnwidth
+plt.rcParams.update({'font.size': fontsize})
+plt.rc('axes', labelsize=labelsize)
+plt.rc('xtick', labelsize=labelsize)
+plt.rc('ytick', labelsize=labelsize)
 
 
 def main(args):
+    hdf5writer.datadir = localDir + '/sims/' + str(args.z)
+    outputDir = localDir + '/simplots/'
+    filename = outputDir + 'r' + str(args.z) + '.png'
+    data = hdf5writer.read.all()
 
-    datadir = localDir + '/sims/' + str(args.z)
-    data = hdf5writer.read.all(datadir)
-    plt.xlabel("Time [yr]")
-    plt.ylabel("Surface Density [g/cm3]")
-    totdust = np.sum(data.dust.Sigma, axis=(1, 2)) / c.au
-    totgas = np.sum(data.gas.Sigma, axis=1) / c.au
-    plt.semilogx(data.t / c.year, totdust)
-    plt.semilogx(data.t / c.year, totgas)
-    plt.show()
+    # Get basic data from files
+    t = data.t / c.year
+    Nt = t.shape[0]
+    tMyr = t / 1e6
+    tMyrEnd = tMyr[Nt - 1]
+    d2g = data.dust.eps
+    rInt = data.grid.ri  # Radial grid cell interfaces [cm]
+    m = data.grid.m  # Mass grid field [g]
+    Nm = m.shape[1]  # Number of mass bins
+    A = np.mean(m[:, 1:] / m[:, :-1], axis=1)[..., None, None]  # Grid constant
+    dm = 2. * (A - 1.) / (A + 1.)  # mass bin width
+    r = data.grid.r  # Radial grid cell centers [cm]
+    R = r / c.au  # Radial grid cell centers [AU]
+    Nr = R.shape[1]
+
+    # Dust information
+    SigmaDust = data.dust.Sigma
+    SigmaDustTot = np.sum(SigmaDust, axis=2)
+    DustDiskMass = np.sum(np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * SigmaDustTot[:, :], axis=1) / c.M_sun
+    # print("Mass of initial dust disc in Earth masses: %.2f" % DustDiskMass[0] * c.M_sun / M_earth)
+    # print("Mass of final dust disc in Earth masses: %.2f" % DustDiskMass[-1] * c.M_sun / M_earth)
+    SigmaDustDist = SigmaDust / dm
+    particleSize = data.dust.a  # Particle size field [cm]
+
+    # Gas information
+    SigmaGas = data.gas.Sigma
+    SigmaGasTot = np.sum(SigmaGas, axis=-1)
+    GasDiskMass = np.sum(np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * SigmaGas[:, :], axis=1) / c.M_sun
+    SigmaGasDist = SigmaGas / dm
+
+    # Planetesimal information
+    SigmaPlan = data.dust.SigmaPlan
+    SigmaPlanTot = np.sum(SigmaPlan, axis=-1)
+    PlanDiskMass = np.sum(np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * SigmaPlan[:, :], axis=1) / c.M_sun
+    PlanDiskMassEarth = np.sum(np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * SigmaPlan[:, :], axis=1) / M_earth
+    # print("Mass of final planetesimal disc mass in Earth masses: %.2f" % PlanDiskMassEarth[-1])
+
+    # Plot the surface density of dust and gas vs the distance from the star
+    if args.plotSDR:
+        fig, ax = plt.subplots()
+        it = -1
+        ax.loglog(R[-1, ...], SigmaDustTot[it, ...], label="Dust")
+        ax.loglog(R[-1, ...], SigmaGas[it, ...], label="Gas")
+        ax.loglog(R[-1, ...], SigmaPlan[it, ...], label="Planetesimals")
+        ax.loglog(R[-1, ...], d2g[it, ...], label="d2g Ratio")
+        #ax.set_ylim(1.e-6, 1.e4)
+        ax.set_xlabel("Distance from star [AU]")
+        ax.set_ylabel("Surface Density [g/cm²]")
+        ax.legend()
+        # ax.set_title(titlestr)
+        # ax.text(0.05, 0.9, textstr, transform=ax.transAxes, fontsize=10)
+        fig.tight_layout()
+        plt.savefig(filename, format='png', dpi=600)
+        plt.show()
 
 
 if __name__ == "__main__":
@@ -34,8 +93,6 @@ if __name__ == "__main__":
     parser.add_argument('-p', action="store", dest="plotPlan", type=int, default=0, help="Plot plan ring over time")
     arguments = parser.parse_args()
     main(arguments)
-
-
 
 # import dustpy
 # from dustpy.plotting.plot import readFilesFromDir

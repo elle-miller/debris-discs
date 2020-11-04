@@ -1,6 +1,8 @@
 import numpy as np
 from numpy import log, exp
 from dustpy.std.gas import Hp
+from dustpy import constants as c
+from matplotlib import pyplot as plt
 
 
 def initialGas(s, IniBumpPeakPos, A, width):
@@ -133,4 +135,10 @@ def alphaBumps(s, IniBumpPeakPos, A, width, TimeBumpForm, BumpCreatedViaAlpha, B
             exit()
         else:
             bumpyAlpha = s.ini.gas.alpha / Gauss(s, r, BumpPeakPos, A, width)
+
+    # Show a plot of alpha wrt radius
+    fig, ax = plt.subplots()
+    ax.loglog(r/c.au, bumpyAlpha, label="Alpha")
+    plt.show()
+
     return bumpyAlpha
