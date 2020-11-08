@@ -13,19 +13,21 @@
 from dustpy.simulation import Simulation
 from dustpy import constants as c
 from dustpy import plot
-from functionsMovingBump import alphaBumps, initialGas
+from functionsMovingBump import alphaBumps2, initialGas
 from functionsPlanFormation import setPlanetesimalFormation, dustSources, addPlanetesimals
 import numpy as np
 import argparse
+import shutil
 from os import path
-
+import bumpParams
 
 ##################### MAIN FUNCTION ###########################################
+
 def main(args):
     # Create instance
     s = Simulation()
 
-    # Print initial conditions of input args
+    # Set initial conditions and initialise
     setInitConds(s, args, verbose=True)
 
     # Bind systoles and diastoles for planetesimal formation
@@ -33,13 +35,10 @@ def main(args):
         setPlanForm(s)
 
     # Bind alpha bump function to create gas gap
-    s.gas.alpha.update(alphaBumps(s, args.iniBumpPeakPos * c.au, args.amplitude, args.width, args.timeBumpForm,
-                                  args.gasEvolution, args.bumpVelFactor))
+    s.gas.alpha.updater.updater = alphaBumps2
+    s.update()
 
-    # Initialise once to get pressure scale height
-    s.initialize()
-
-    # Bind initial gas profile
+    # Bind initial gas profile and reinitialize
     s.ini.gas.Sigma = initialGas(s, args.iniBumpPeakPos * c.au, args.amplitude, args.width)
     s.ini.dust.allowDriftLimitedParticles = True
     s.initialize()
@@ -58,16 +57,6 @@ def main(args):
         s.dust.SigmaFloor.save = False
         s.dust.v.rad.save = False
         s.dust.D.save = False
-
-    # Haven't found: dust/jac, dust/kFrag, dust/kStick
-    # if s.pars.dustCoagulation and s.pars.dustAdvection:
-    #     s.pars.excludeAttr = ['dust/backReactCoeff', 'dust/coagSources', 'dust/cFrag',
-    #                           'dust/cStick', 'dust/jac', 'dust/kFrag', 'dust/kStick', 'dust/vRel']
-    # else:
-    #     s.pars.excludeAttr = ['dust/backReactCoeff', 'dust/coagSources', 'dust/cFrag',
-    #                           'dust/cStick', 'dust/jac', 'dust/kFrag', 'dust/kStick', 'dust/vRel',
-    #                           'dust/Diff', 'dust/DiffInt', 'dust/SigmaFloor', 'dust/h', 'dust/vRad',
-    #                           'dust/vRadInt']
 
     # Run the simulation
     print("Evolving...")
@@ -122,6 +111,9 @@ def setInitConds(s, args, verbose):
 
     # Star
     s.ini.star.M = c.M_sun * args.starmass
+
+    # Bump
+    bumpParams.init(A=args.amplitude, w=args.width, p=args.iniBumpPeakPos, v=args.bumpVelFactor)
 
     s.initialize()
 
@@ -183,15 +175,18 @@ def setSimulationParams(s, args):
 
     # Output settings
     localDir = '/media/elle/Seagate Backup Plus Drive/2020/mpia/debris-discs'
-    slurmDir = '/media/elle/Seagate Backup Plus Drive/2020/mpia/mpia'
+    slurmDir = '/mnt/beegfs/bachelor/scratch/miller/mpia'
     s.writer.overwrite = True
     if path.exists(localDir):
-        s.writer.datadir = localDir + '/sims/' + str(args.outputDirNo)
+        outputDir = localDir + '/sims/' + str(args.outputDirNo)
     elif path.exists(slurmDir):
-        s.writer.datadir = slurmDir + '/sims/' + str(args.outputDirNo)
+        outputDir = slurmDir + '/sims/' + str(args.outputDirNo)
     else:
         print("Output directory not found")
         return
+    s.writer.datadir = outputDir
+    if path.exists(outputDir):
+        shutil.rmtree(outputDir)
 
     # Simulation settings
     s.t.snapshots = np.linspace(args.minyear, args.maxyear, num=args.nsnap, endpoint=True) * c.year
@@ -222,6 +217,14 @@ def setSimulationParams(s, args):
         s.dust.S.hyd = 0.
         s.dust.S.hyd.updater = None
         s.dust.Fi.updater = None
+
+
+class Bump:
+    def __init__(self, args):
+        self.alpha = args.alpha
+        self.amplitude = args.amplitude
+        self.position = args.iniBumpPeakPos
+        self.width = args.width
 
 
 if __name__ == "__main__":

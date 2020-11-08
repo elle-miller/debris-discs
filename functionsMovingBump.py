@@ -3,6 +3,8 @@ from numpy import log, exp
 from dustpy.std.gas import Hp
 from dustpy import constants as c
 from matplotlib import pyplot as plt
+from dustpy.std.sim import dt
+import bumpParams
 
 
 def initialGas(s, IniBumpPeakPos, A, width):
@@ -79,7 +81,8 @@ def getPeakPosition(s, IniBumpPeakPos, TimeBumpForm, BumpVelFactor):
         s.gas.BumpPeakPos = IniBumpPeakPos
     elif s.t > TimeBumpForm:
         iBumpPeakPos = (np.abs(s.grid.r - s.gas.BumpPeakPos)).argmin()
-        s.gas.BumpPeakPos += BumpRadVel(s, iBumpPeakPos=iBumpPeakPos, BumpVelFactor=BumpVelFactor) * s.dt
+        s.gas.BumpPeakPos = IniBumpPeakPos
+        # TODO: s.gas.BumpPeakPos += BumpRadVel(s, iBumpPeakPos=iBumpPeakPos, BumpVelFactor=BumpVelFactor) * dt(s)
     return s.gas.BumpPeakPos
 
 
@@ -141,4 +144,44 @@ def alphaBumps(s, IniBumpPeakPos, A, width, TimeBumpForm, BumpCreatedViaAlpha, B
     ax.loglog(r/c.au, bumpyAlpha, label="Alpha")
     plt.show()
 
+    return bumpyAlpha
+
+
+# Alpha bump with one input argumen
+def alphaBumps2(s):
+    """
+    Set turbulence values. This function is called in the code and
+    will be used to call the other funtions that change the gas density.
+
+    Input:
+    --------
+    IniBumpPeakPos: float
+    initial position of bump
+    A: float
+    amplitude of bump
+    TimeBumpForm: float
+    time after which a bump is allowed to form
+    width: float
+    bump width scale factor
+    """
+    IniBumpPeakPos = bumpParams.position*c.au
+    A = bumpParams.amplitude
+    width = bumpParams.width
+    BumpVelFactor = bumpParams.velocity
+    BumpCreatedViaAlpha = True
+    TimeBumpForm = 0
+    r = s.grid.r
+    bumpyAlpha = s.ini.gas.alpha * np.ones_like(r)
+    M_gas = s.ini.gas.Mdisk * s.ini.star.M / (s.ini.dust.d2gRatio + 1.)  # total gas mass for given d2g
+
+    if not BumpCreatedViaAlpha:
+        s.gas.Sigma = renormalizeGasProfile(s, M_gas, IniBumpPeakPos, BumpVelFactor, A, width, TimeBumpForm)
+    else:
+        # If the peak position of the bump goes beyond the set minimum radius, exit the program
+        BumpPeakPos = getPeakPosition(s, IniBumpPeakPos, TimeBumpForm, BumpVelFactor)
+        if BumpPeakPos < s.ini.grid.rmin:
+            print("Exiting")
+            exit()
+        else:
+            bumpyAlpha = s.ini.gas.alpha / Gauss(s, r, BumpPeakPos, A, width)
     return bumpyAlpha
