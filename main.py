@@ -175,7 +175,7 @@ def setSimulationParams(s, args):
 
     # Output settings
     localDir = '/media/elle/Seagate Backup Plus Drive/2020/mpia/debris-discs'
-    slurmDir = '/mnt/beegfs/bachelor/scratch/miller/mpia'
+    slurmDir = '/mnt/beegfs/bachelor/scratch/miller/dustpy2'
     s.writer.overwrite = True
     if path.exists(localDir):
         outputDir = localDir + '/sims/' + str(args.outputDirNo)
