@@ -1,7 +1,7 @@
 #!/bin/bash -l
 
 # Bash script to run the mpi script multiple times for varying parameters
-# Date: Nov 8
+# Date: Nov 8 - running on Nov19
 alpha=4
 startingDir=2
 

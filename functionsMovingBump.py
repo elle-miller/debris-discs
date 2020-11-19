@@ -82,7 +82,8 @@ def getPeakPosition(s, IniBumpPeakPos, TimeBumpForm, BumpVelFactor):
     elif s.t > TimeBumpForm:
         iBumpPeakPos = (np.abs(s.grid.r - s.gas.BumpPeakPos)).argmin()
         s.gas.BumpPeakPos = IniBumpPeakPos
-        # TODO: s.gas.BumpPeakPos += BumpRadVel(s, iBumpPeakPos=iBumpPeakPos, BumpVelFactor=BumpVelFactor) * dt(s)
+        s.gas.BumpPeakPos += BumpRadVel(s, iBumpPeakPos=iBumpPeakPos, BumpVelFactor=BumpVelFactor) * dt(s)
+
     return s.gas.BumpPeakPos
 
 

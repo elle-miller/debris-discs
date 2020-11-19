@@ -67,12 +67,12 @@ def main(args):
     # Plot the surface density of dust and gas vs the distance from the star
     if args.plotSDR:
         fig, ax = plt.subplots()
-        it = -1
+        it = 0
         ax.loglog(R[-1, ...], SigmaDustTot[it, ...], label="Dust")
         ax.loglog(R[-1, ...], SigmaGas[it, ...], label="Gas")
         ax.loglog(R[-1, ...], SigmaPlan[it, ...], label="Planetesimals")
         ax.loglog(R[-1, ...], d2g[it, ...], label="d2g Ratio")
-        #ax.set_ylim(1.e-6, 1.e4)
+        ax.set_ylim(1.e-6, 1.e4)
         ax.set_xlabel("Distance from star [AU]")
         ax.set_ylabel("Surface Density [g/cm²]")
         ax.legend()
