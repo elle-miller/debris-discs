@@ -61,4 +61,4 @@ def dustSources(s):
     return s.dust.dSigmaDust
 
 def addPlanetesimals(s):
-    s.dust.SigmaPlan += s.t.stepsize * s.dust.dSigmaPlan
+    s.dust.SigmaPlan += s.t.prevstepsize * s.dust.dSigmaPlan

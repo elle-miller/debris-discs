@@ -59,7 +59,12 @@ def BumpRadVel(s, iBumpPeakPos, BumpVelFactor):
     iBumpPeakPos: integer
         bin closest to current gas bump peak position
     """
-    return -1.5 * BumpVelFactor * s.ini.gas.alpha * (s.gas.Hp[iBumpPeakPos] / s.grid.r[iBumpPeakPos]) ** 2 * \
+    # print(BumpVelFactor)
+    # print(repr(s.ini.gas.alpha))
+    # print(s.gas.Hp[iBumpPeakPos])
+    # print(s.grid.r[iBumpPeakPos])
+    # print(s.grid.OmegaK[iBumpPeakPos])
+    return -1.5 * BumpVelFactor * s.ini.gas.alpha[0] * (s.gas.Hp[iBumpPeakPos] / s.grid.r[iBumpPeakPos]) ** 2 * \
         s.grid.OmegaK[iBumpPeakPos] * s.grid.r[iBumpPeakPos]
 
 
@@ -82,7 +87,13 @@ def getPeakPosition(s, IniBumpPeakPos, TimeBumpForm, BumpVelFactor):
     elif s.t > TimeBumpForm:
         iBumpPeakPos = (np.abs(s.grid.r - s.gas.BumpPeakPos)).argmin()
         s.gas.BumpPeakPos = IniBumpPeakPos
-        s.gas.BumpPeakPos += BumpRadVel(s, iBumpPeakPos=iBumpPeakPos, BumpVelFactor=BumpVelFactor) * dt(s)
+        s.gas.BumpPeakPos += BumpRadVel(s, iBumpPeakPos=iBumpPeakPos, BumpVelFactor=BumpVelFactor) * s.t.prevstepsize
+
+        # print("iBumpPeakPos= ", iBumpPeakPos)
+        # print("BumpPeakPos= ", IniBumpPeakPos/c.au)
+        # print("Previous step size= ",repr(s.t.prevstepsize))
+        # print("BumpRadVel= ", repr(BumpRadVel(s, iBumpPeakPos=iBumpPeakPos, BumpVelFactor=BumpVelFactor)))
+        # print("New BumpPeakPos= ", repr(s.gas.BumpPeakPos/c.au))
 
     return s.gas.BumpPeakPos
 
