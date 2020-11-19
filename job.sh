@@ -1,4 +1,11 @@
-source activate dustpy
+#!/bin/bash -l
+#SBATCH --job-name=loop
+#SBATCH --mail-user elle.miller101@gmail.com
+#SBATCH --mail-type=ALL
+
+module load anaconda3
+module load openmpi-4.0.1
+source activate dustpy2
 
 # Shell script to run individual jobs. Current inputs:
 # $1 - Directory
