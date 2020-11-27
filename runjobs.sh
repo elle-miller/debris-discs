@@ -18,12 +18,14 @@ p2=90
 
 # Planetesimal scripts with only 3 snapshots
 n=3
-# Stationary bump
-sbatch job.sh $startingDir $alpha $A1 $v1 $p1 $n "$0"
+planOff=0
+planOn=1
+# Stationary bump with formation
+sbatch job.sh $startingDir $alpha $A1 $v1 $p1 $n $planOn
 ((startingDir+=1))
 
-# Moving bump
-sbatch job.sh $startingDir $alpha $A2 $v2 $p2 $n "$1"
+# Stationary bump with no formation
+sbatch job.sh $startingDir $alpha $A1 $v1 $p1 $n $planOff
 ((startingDir+=1))
 
 # Loop through two alphas, two amplitudes and three positions. 50 snapshots. PF ON
@@ -32,7 +34,7 @@ velocity=0
 for alpha in 3 4; do
   for amplitude in 10 30; do
     for position in 30 60 90; do
-      sbatch job.sh $startingDir $alpha $amplitude $velocity $position $n "$1"
+      sbatch job.sh $startingDir $alpha $amplitude $velocity $position $n $planOn
       ((startingDir+=1))
     done
   done
