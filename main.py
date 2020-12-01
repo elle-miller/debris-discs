@@ -15,6 +15,7 @@ from dustpy import constants as c
 from dustpy import plot
 from functionsMovingBump import alphaBumps2, initialGas
 from functionsPlanFormation import setPlanetesimalFormation, dustSources, addPlanetesimals
+import matplotlib.pyplot as plt
 import numpy as np
 import argparse
 import shutil
@@ -39,7 +40,8 @@ def main(args):
     s.update()
 
     # Bind initial gas profile and reinitialize
-    s.ini.gas.Sigma = initialGas(s, args.iniBumpPeakPos * c.au, args.amplitude, args.width)
+    #s.ini.gas.Sigma = initialGas(s, args.iniBumpPeakPos * c.au, args.amplitude, args.width)
+    s.gas.Sigma = initialGas(s, args.iniBumpPeakPos * c.au, args.amplitude, args.width)
     s.ini.dust.allowDriftLimitedParticles = True
     s.initialize()
 
@@ -89,7 +91,7 @@ def setInitConds(s, args, verbose):
     s.ini.grid.Nm = args.Nm
     s.ini.grid.mmax = args.massMax  # default is 1e5
     if args.dustEvolution:
-
+        # I think it would be good to check if this is needed. You can see for the 1e-4 simulations what is the maximum grain size that is reached.
         # Only enters for alpha0=1e-4
         if args.alpha < 3e-4:
             s.ini.grid.mmax = 1e14
@@ -100,7 +102,7 @@ def setInitConds(s, args, verbose):
         s.ini.grid.mmax = 1e1
 
     # Gas
-    s.ini.gas.Mdisk = args.MdiskInMstar * c.M_sun
+    s.ini.gas.Mdisk = args.MdiskInMstar * c.M_sun # missing stellar mass which could be different to 1.0
     s.ini.gas.alpha = args.alpha * np.ones_like(s.grid.r)
 
     # Dust (d2g ratio is dust.eps)
@@ -174,8 +176,8 @@ def setSimulationParams(s, args):
     """
 
     # Output settings
-    localDir = '/media/elle/Seagate Backup Plus Drive/2020/mpia/debris-discs'
-    slurmDir = '/mnt/beegfs/bachelor/scratch/miller/dustpy2/debris-discs'
+    localDir = '.'# '/media/elle/Seagate Backup Plus Drive/2020/mpia/debris-discs'
+    slurmDir = '.'# '/mnt/beegfs/bachelor/scratch/miller/dustpy2/debris-discs'
     s.writer.overwrite = True
     if path.exists(localDir):
         outputDir = localDir + '/sims/' + str(args.outputDirNo)
@@ -190,7 +192,7 @@ def setSimulationParams(s, args):
 
     # Simulation settings
     s.t.snapshots = np.linspace(args.minyear, args.maxyear, num=args.nsnap, endpoint=True) * c.year
-
+    print('snapshots=',len(s.t.snapshots))
     if not args.gasEvolution:
         del (s.integrator.instructions[1])
 

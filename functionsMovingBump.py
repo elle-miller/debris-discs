@@ -21,11 +21,27 @@ def initialGas(s, IniBumpPeakPos, A, width):
     bump width scale factor
     """
     r = s.grid.r
-    SigmaGas = (r / s.ini.gas.SigmaRc) ** -s.ini.gas.SigmaExp * np.exp(-(r / s.ini.gas.SigmaRc) ** (2-s.ini.gas.SigmaExp))
-    M_gas = s.ini.gas.Mdisk * s.ini.star.M / (s.ini.dust.d2gRatio + 1.)  # total gas mass for given d2g
-    s.ini.gas.Sigma0 = M_gas / np.trapz(2 * np.pi * r * SigmaGas, x=r)
+    # sigma without gap (tapered power law)
+    SigmaGas_unperturbed = (r / s.ini.gas.SigmaRc) ** s.ini.gas.SigmaExp * np.exp(-(r / s.ini.gas.SigmaRc) ** (2+s.ini.gas.SigmaExp))
     BumpPeakPos = getPeakPosition(s, IniBumpPeakPos=IniBumpPeakPos, TimeBumpForm=0, BumpVelFactor=0)
-    iniGas = Gauss(s, r, BumpPeakPos, A, width) * s.ini.gas.Sigma0 * SigmaGas
+    # sigma with gap
+    SigmaGas_perturbed=SigmaGas_unperturbed *  Gauss(s, r, BumpPeakPos, A, width) 
+
+    # normalize to get the right total disk mass
+    M_gas = s.ini.gas.Mdisk / (s.ini.dust.d2gRatio + 1.)  # total gas mass in grams for given d2g
+    normalization_factor=M_gas / np.trapz(2 * np.pi * r * SigmaGas_perturbed, x=r) 
+    iniGas = SigmaGas_perturbed*normalization_factor
+
+    # SigmaGas = (r / s.ini.gas.SigmaRc) ** s.ini.gas.SigmaExp * np.exp(-(r / s.ini.gas.SigmaRc) ** (2+s.ini.gas.SigmaExp))
+    # M_gas = s.ini.gas.Mdisk * s.ini.star.M / (s.ini.dust.d2gRatio + 1.)  # total gas mass for given d2g
+    # s.ini.gas.Sigma0 = M_gas / np.trapz(2 * np.pi * r * SigmaGas, x=r) 
+    # BumpPeakPos = getPeakPosition(s, IniBumpPeakPos=IniBumpPeakPos, TimeBumpForm=0, BumpVelFactor=0)
+    # iniGas = Gauss(s, r, BumpPeakPos, A, width) * s.ini.gas.Sigma0 * SigmaGas
+
+    # plt.plot(s.grid.r, iniGas)
+    # plt.xscale('log')
+    # plt.yscale('log')
+    # plt.show()
     return iniGas
 
 
@@ -85,12 +101,10 @@ def getPeakPosition(s, IniBumpPeakPos, TimeBumpForm, BumpVelFactor):
     if s.t <= TimeBumpForm:
         s.gas.BumpPeakPos = IniBumpPeakPos
     elif s.t > TimeBumpForm:
-        iBumpPeakPos = (np.abs(s.grid.r - s.gas.BumpPeakPos)).argmin()
-        s.gas.BumpPeakPos = IniBumpPeakPos
+        iBumpPeakPos = (np.abs(s.grid.r - s.gas.BumpPeakPos)).argmin() # get current closest index where to calculate physical quantities
+        #s.gas.BumpPeakPos = IniBumpPeakPos   
         s.gas.BumpPeakPos += BumpRadVel(s, iBumpPeakPos=iBumpPeakPos, BumpVelFactor=BumpVelFactor) * s.t.prevstepsize
-
         # print("iBumpPeakPos= ", iBumpPeakPos)
-        # print("BumpPeakPos= ", IniBumpPeakPos/c.au)
         # print("Previous step size= ",repr(s.t.prevstepsize))
         # print("BumpRadVel= ", repr(BumpRadVel(s, iBumpPeakPos=iBumpPeakPos, BumpVelFactor=BumpVelFactor)))
         # print("New BumpPeakPos= ", repr(s.gas.BumpPeakPos/c.au))
@@ -111,8 +125,8 @@ def renormalizeGasProfile(s, M_gas, IniBumpPeakPos, BumpVelFactor, A, width, Tim
 
     if s.t >= TimeBumpForm:
         r = s.grid.r
-        s.gas.Sigma = (r / s.ini.gas.SigmaR0) ** -s.ini.gas.SigmaExp * np.exp(
-            -(r / s.ini.gas.SigmaR0) ** (2 - s.ini.gas.SigmaExp))
+        s.gas.Sigma = (r / s.ini.gas.SigmaR0) ** s.ini.gas.SigmaExp * np.exp(
+            -(r / s.ini.gas.SigmaR0) ** (2 + s.ini.gas.SigmaExp))
         BumpPeakPos = getPeakPosition(s, IniBumpPeakPos, TimeBumpForm, BumpVelFactor)
         s.gas.Sigma += Gauss(s, r, BumpPeakPos, A, width)
         SigmaNormConst = M_gas / np.trapz(2 * np.pi * s.grid.r * s.gas.Sigma, x=s.grid.r)
