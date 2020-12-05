@@ -33,7 +33,11 @@ def main(args):
     Nt = t.shape[0]
     tMyr = t / 1e6
     tMyrEnd = tMyr[Nt - 1]
+<<<<<<< HEAD
     print("tMyrEnd=",tMyrEnd)
+=======
+    print("tMyrEnd = ", tMyrEnd)
+>>>>>>> 761c461428aa2f7211a3766ad3340a57124e1775
     d2g = data.dust.eps
     rInt = data.grid.ri  # Radial grid cell interfaces [cm]
     m = data.grid.m  # Mass grid field [g]
@@ -48,8 +52,14 @@ def main(args):
     SigmaDust = data.dust.Sigma
     SigmaDustTot = np.sum(SigmaDust, axis=2)
     DustDiskMass = np.sum(np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * SigmaDustTot[:, :], axis=1) / c.M_sun
+<<<<<<< HEAD
     print("Mass of initial dust disc in Earth masses: %.2f" % DustDiskMass[0] * c.M_sun / M_earth)
     print("Mass of final dust disc in Earth masses: %.2f" % DustDiskMass[-1] * c.M_sun / M_earth)
+=======
+    DustDiskMassEarth = np.sum(np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * SigmaDustTot[:, :], axis=1) / M_earth
+    print("Initial dust disc mass (Earths): ", DustDiskMassEarth[0])
+    print("Final dust disc mass (Earths): ", DustDiskMassEarth[-1])
+>>>>>>> 761c461428aa2f7211a3766ad3340a57124e1775
     SigmaDustDist = SigmaDust / dm
     particleSize = data.dust.a  # Particle size field [cm]
 
@@ -64,8 +74,13 @@ def main(args):
     SigmaPlanTot = np.sum(SigmaPlan, axis=-1)
     PlanDiskMass = np.sum(np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * SigmaPlan[:, :], axis=1) / c.M_sun
     PlanDiskMassEarth = np.sum(np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * SigmaPlan[:, :], axis=1) / M_earth
+<<<<<<< HEAD
     print("Mass of final planetesimal disc mass in Earth masses: %.2f" % PlanDiskMassEarth[-1])
     print("SigmaPlanTot=",SigmaPlanTot)
+=======
+    print("Mass of final planetesimal disc mass in Earth masses: %.10f" % PlanDiskMassEarth[-1])
+    print(SigmaPlanTot)
+>>>>>>> 761c461428aa2f7211a3766ad3340a57124e1775
 
     # Plot the surface density of dust and gas vs the distance from the star
     if args.plotSDR:

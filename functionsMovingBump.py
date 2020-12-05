@@ -21,11 +21,27 @@ def initialGas(s, IniBumpPeakPos, A, width):
     bump width scale factor
     """
     r = s.grid.r
-    SigmaGas = (r / s.ini.gas.SigmaRc) ** -s.ini.gas.SigmaExp * np.exp(-(r / s.ini.gas.SigmaRc) ** (2-s.ini.gas.SigmaExp))
-    M_gas = s.ini.gas.Mdisk * s.ini.star.M / (s.ini.dust.d2gRatio + 1.)  # total gas mass for given d2g
-    s.ini.gas.Sigma0 = M_gas / np.trapz(2 * np.pi * r * SigmaGas, x=r)
+    # sigma without gap (tapered power law)
+    SigmaGas_unperturbed = (r / s.ini.gas.SigmaRc) ** s.ini.gas.SigmaExp * np.exp(-(r / s.ini.gas.SigmaRc) ** (2+s.ini.gas.SigmaExp))
     BumpPeakPos = getPeakPosition(s, IniBumpPeakPos=IniBumpPeakPos, TimeBumpForm=0, BumpVelFactor=0)
-    iniGas = Gauss(s, r, BumpPeakPos, A, width) * s.ini.gas.Sigma0 * SigmaGas
+    # sigma with gap
+    SigmaGas_perturbed=SigmaGas_unperturbed *  Gauss(s, r, BumpPeakPos, A, width) 
+
+    # normalize to get the right total disk mass
+    M_gas = s.ini.gas.Mdisk / (s.ini.dust.d2gRatio + 1.)  # total gas mass in grams for given d2g
+    normalization_factor=M_gas / np.trapz(2 * np.pi * r * SigmaGas_perturbed, x=r) 
+    iniGas = SigmaGas_perturbed*normalization_factor
+
+    # SigmaGas = (r / s.ini.gas.SigmaRc) ** s.ini.gas.SigmaExp * np.exp(-(r / s.ini.gas.SigmaRc) ** (2+s.ini.gas.SigmaExp))
+    # M_gas = s.ini.gas.Mdisk * s.ini.star.M / (s.ini.dust.d2gRatio + 1.)  # total gas mass for given d2g
+    # s.ini.gas.Sigma0 = M_gas / np.trapz(2 * np.pi * r * SigmaGas, x=r) 
+    # BumpPeakPos = getPeakPosition(s, IniBumpPeakPos=IniBumpPeakPos, TimeBumpForm=0, BumpVelFactor=0)
+    # iniGas = Gauss(s, r, BumpPeakPos, A, width) * s.ini.gas.Sigma0 * SigmaGas
+
+    # plt.plot(s.grid.r, iniGas)
+    # plt.xscale('log')
+    # plt.yscale('log')
+    # plt.show()
     return iniGas
 
 
@@ -85,12 +101,10 @@ def getPeakPosition(s, IniBumpPeakPos, TimeBumpForm, BumpVelFactor):
     if s.t <= TimeBumpForm:
         s.gas.BumpPeakPos = IniBumpPeakPos
     elif s.t > TimeBumpForm:
-        iBumpPeakPos = (np.abs(s.grid.r - s.gas.BumpPeakPos)).argmin()
-        s.gas.BumpPeakPos = IniBumpPeakPos
+        iBumpPeakPos = (np.abs(s.grid.r - s.gas.BumpPeakPos)).argmin() # get current closest index where to calculate physical quantities
+        #s.gas.BumpPeakPos = IniBumpPeakPos   
         s.gas.BumpPeakPos += BumpRadVel(s, iBumpPeakPos=iBumpPeakPos, BumpVelFactor=BumpVelFactor) * s.t.prevstepsize
-
         # print("iBumpPeakPos= ", iBumpPeakPos)
-        # print("BumpPeakPos= ", IniBumpPeakPos/c.au)
         # print("Previous step size= ",repr(s.t.prevstepsize))
         # print("BumpRadVel= ", repr(BumpRadVel(s, iBumpPeakPos=iBumpPeakPos, BumpVelFactor=BumpVelFactor)))
         # print("New BumpPeakPos= ", repr(s.gas.BumpPeakPos/c.au))
@@ -111,8 +125,8 @@ def renormalizeGasProfile(s, M_gas, IniBumpPeakPos, BumpVelFactor, A, width, Tim
 
     if s.t >= TimeBumpForm:
         r = s.grid.r
-        s.gas.Sigma = (r / s.ini.gas.SigmaR0) ** -s.ini.gas.SigmaExp * np.exp(
-            -(r / s.ini.gas.SigmaR0) ** (2 - s.ini.gas.SigmaExp))
+        s.gas.Sigma = (r / s.ini.gas.SigmaR0) ** s.ini.gas.SigmaExp * np.exp(
+            -(r / s.ini.gas.SigmaR0) ** (2 + s.ini.gas.SigmaExp))
         BumpPeakPos = getPeakPosition(s, IniBumpPeakPos, TimeBumpForm, BumpVelFactor)
         s.gas.Sigma += Gauss(s, r, BumpPeakPos, A, width)
         SigmaNormConst = M_gas / np.trapz(2 * np.pi * s.grid.r * s.gas.Sigma, x=s.grid.r)
@@ -120,47 +134,8 @@ def renormalizeGasProfile(s, M_gas, IniBumpPeakPos, BumpVelFactor, A, width, Tim
     return s.gas.Sigma
 
 
-def alphaBumps(s, IniBumpPeakPos, A, width, TimeBumpForm, BumpCreatedViaAlpha, BumpVelFactor):
-    """
-    Set turbulence values. This function is called in the code and
-    will be used to call the other funtions that change the gas density.
-
-    Input:
-    --------
-    IniBumpPeakPos: float
-    initial position of bump
-    A: float
-    amplitude of bump
-    TimeBumpForm: float
-    time after which a bump is allowed to form
-    width: float
-    bump width scale factor
-    """
-    r = s.grid.r
-    bumpyAlpha = s.ini.gas.alpha * np.ones_like(r)
-    M_gas = s.ini.gas.Mdisk * s.ini.star.M / (s.ini.dust.d2gRatio + 1.)  # total gas mass for given d2g
-
-    if not BumpCreatedViaAlpha:
-        s.gas.Sigma = renormalizeGasProfile(s, M_gas, IniBumpPeakPos, BumpVelFactor, A, width, TimeBumpForm)
-    else:
-        # If the peak position of the bump goes beyond the set minimum radius, exit the program
-        BumpPeakPos = getPeakPosition(s, IniBumpPeakPos, TimeBumpForm, BumpVelFactor)
-        if BumpPeakPos < s.ini.grid.rmin:
-            print("Exiting")
-            exit()
-        else:
-            bumpyAlpha = s.ini.gas.alpha / Gauss(s, r, BumpPeakPos, A, width)
-
-    # Show a plot of alpha wrt radius
-    fig, ax = plt.subplots()
-    ax.loglog(r/c.au, bumpyAlpha, label="Alpha")
-    plt.show()
-
-    return bumpyAlpha
-
-
-# Alpha bump with one input argumen
-def alphaBumps2(s):
+# Alpha bump
+def alphaBumps(s):
     """
     Set turbulence values. This function is called in the code and
     will be used to call the other funtions that change the gas density.

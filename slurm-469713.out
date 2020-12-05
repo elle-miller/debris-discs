@@ -1,0 +1,32 @@
+Traceback (most recent call last):
+  File "./main.py", line 13, in <module>
+    from dustpy.simulation import Simulation
+  File "/mnt/beegfs/bachelor/groups/henning/users/miller/envs/dustpy2/lib/python3.7/site-packages/dustpy/__init__.py", line 14, in <module>
+    from dustpy import plot
+  File "/mnt/beegfs/bachelor/groups/henning/users/miller/envs/dustpy2/lib/python3.7/site-packages/dustpy/plot/__init__.py", line 4, in <module>
+    from dustpy.plot.plot import ipanel
+  File "/mnt/beegfs/bachelor/groups/henning/users/miller/envs/dustpy2/lib/python3.7/site-packages/dustpy/plot/plot.py", line 2, in <module>
+    from dustpy.simulation import Simulation
+  File "/mnt/beegfs/bachelor/groups/henning/users/miller/envs/dustpy2/lib/python3.7/site-packages/dustpy/simulation.py", line 1, in <module>
+    from simframe import Frame
+  File "/mnt/beegfs/bachelor/groups/henning/users/miller/envs/dustpy2/lib/python3.7/site-packages/simframe/__init__.py", line 1, in <module>
+    from simframe.frame import Frame
+  File "/mnt/beegfs/bachelor/groups/henning/users/miller/envs/dustpy2/lib/python3.7/site-packages/simframe/frame/__init__.py", line 5, in <module>
+    from simframe.frame.frame import Frame
+  File "/mnt/beegfs/bachelor/groups/henning/users/miller/envs/dustpy2/lib/python3.7/site-packages/simframe/frame/frame.py", line 9, in <module>
+    from simframe.io.writer import Writer
+  File "/mnt/beegfs/bachelor/groups/henning/users/miller/envs/dustpy2/lib/python3.7/site-packages/simframe/io/__init__.py", line 8, in <module>
+    from simframe.io import writers
+  File "/mnt/beegfs/bachelor/groups/henning/users/miller/envs/dustpy2/lib/python3.7/site-packages/simframe/io/writers/__init__.py", line 5, in <module>
+    from simframe.io.writers.hdf5writer import hdf5writer
+  File "/mnt/beegfs/bachelor/groups/henning/users/miller/envs/dustpy2/lib/python3.7/site-packages/simframe/io/writers/hdf5writer.py", line 225, in <module>
+    "com": "lzf", "comopts": None}, reader=hdf5reader)
+  File "/mnt/beegfs/bachelor/groups/henning/users/miller/envs/dustpy2/lib/python3.7/site-packages/simframe/io/writer.py", line 59, in __init__
+    self.dumping = dumping
+  File "/mnt/beegfs/bachelor/groups/henning/users/miller/envs/dustpy2/lib/python3.7/site-packages/simframe/io/writer.py", line 163, in dumping
+    self._preparedump()
+  File "/mnt/beegfs/bachelor/groups/henning/users/miller/envs/dustpy2/lib/python3.7/site-packages/simframe/io/writer.py", line 290, in _preparedump
+    os.remove(filename)
+FileNotFoundError: [Errno 2] No such file or directory: 'temp.dmp'
+srun: error: bachelor-node05: task 0: Exited with exit code 1
+srun: Terminating job step 469713.0

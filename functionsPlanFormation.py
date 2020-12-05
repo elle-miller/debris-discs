@@ -10,6 +10,7 @@ import numpy as np
 # This caculates the change rates for all dust species and the planetismal
 # formation rate at each time step.
 def setPlanetesimalFormation(s):
+    #print("setPF")
     # Just some helper variables to make it more readable
     OmegaK = s.grid.OmegaK  # Keplerian frequency          (Nr,)
     h = s.dust.H  # Dust scale heights           (Nr, Nm)
@@ -58,7 +59,10 @@ def setPlanetesimalFormation(s):
 
 # This function returns the source/loss terms we calculated before
 def dustSources(s):
+    print("dustSources")
     return s.dust.dSigmaDust
 
+
 def addPlanetesimals(s):
+    print("addPlanetesimals")
     s.dust.SigmaPlan += s.t.prevstepsize * s.dust.dSigmaPlan
