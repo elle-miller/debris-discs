@@ -3,7 +3,7 @@
 # Bash script to run the mpi script multiple times for varying parameters
 # Date: Nov 8 - running on Nov19
 alpha=4
-startingDir=2
+startingDir=16
 
 # Two areas where alpha is a big problem
 # Stationary bump: 1e-4, A=3, pos=30
@@ -17,7 +17,7 @@ v2=0.1
 p2=90
 
 # Planetesimal scripts with only 3 snapshots
-n=3
+n=5
 planOff=0
 planOn=1
 # Stationary bump with formation
@@ -29,7 +29,7 @@ sbatch job.sh $startingDir $alpha $A1 $v1 $p1 $n $planOff
 ((startingDir+=1))
 
 # Loop through two alphas, two amplitudes and three positions. 50 snapshots. PF ON
-n=50
+n=100
 velocity=0
 for alpha in 3 4; do
   for amplitude in 10 30; do

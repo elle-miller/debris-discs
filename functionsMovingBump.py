@@ -134,47 +134,8 @@ def renormalizeGasProfile(s, M_gas, IniBumpPeakPos, BumpVelFactor, A, width, Tim
     return s.gas.Sigma
 
 
-def alphaBumps(s, IniBumpPeakPos, A, width, TimeBumpForm, BumpCreatedViaAlpha, BumpVelFactor):
-    """
-    Set turbulence values. This function is called in the code and
-    will be used to call the other funtions that change the gas density.
-
-    Input:
-    --------
-    IniBumpPeakPos: float
-    initial position of bump
-    A: float
-    amplitude of bump
-    TimeBumpForm: float
-    time after which a bump is allowed to form
-    width: float
-    bump width scale factor
-    """
-    r = s.grid.r
-    bumpyAlpha = s.ini.gas.alpha * np.ones_like(r)
-    M_gas = s.ini.gas.Mdisk * s.ini.star.M / (s.ini.dust.d2gRatio + 1.)  # total gas mass for given d2g
-
-    if not BumpCreatedViaAlpha:
-        s.gas.Sigma = renormalizeGasProfile(s, M_gas, IniBumpPeakPos, BumpVelFactor, A, width, TimeBumpForm)
-    else:
-        # If the peak position of the bump goes beyond the set minimum radius, exit the program
-        BumpPeakPos = getPeakPosition(s, IniBumpPeakPos, TimeBumpForm, BumpVelFactor)
-        if BumpPeakPos < s.ini.grid.rmin:
-            print("Exiting")
-            exit()
-        else:
-            bumpyAlpha = s.ini.gas.alpha / Gauss(s, r, BumpPeakPos, A, width)
-
-    # Show a plot of alpha wrt radius
-    fig, ax = plt.subplots()
-    ax.loglog(r/c.au, bumpyAlpha, label="Alpha")
-    plt.show()
-
-    return bumpyAlpha
-
-
-# Alpha bump with one input argumen
-def alphaBumps2(s):
+# Alpha bump
+def alphaBumps(s):
     """
     Set turbulence values. This function is called in the code and
     will be used to call the other funtions that change the gas density.
