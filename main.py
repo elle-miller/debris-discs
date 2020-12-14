@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-# -*- coding: utf-8 -*-
+
 
 ###############################################################################
 # main.py
@@ -10,11 +10,15 @@
 # Example script with dust evolution turned off
 # python main.py -e 1e4 -n 5 -3 1 -2 0
 
-from dustpy.simulation import Simulation
+try:
+    from dustpy.simulation import Simulation
+except:
+    from dustpy.simulation import Simulation
 from dustpy import constants as c
 from dustpy import plot
 from functionsMovingBump import alphaBumps, initialGas
-from functionsPlanFormation import setPlanetesimalFormation, dustSources, addPlanetesimals
+from functionsPlanFormation import M_plan, S_ext, dSigmaPlan
+from simframe import Instruction, schemes
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
@@ -22,7 +26,9 @@ import shutil
 from os import path
 import bumpParams
 
+
 ##################### MAIN FUNCTION ###########################################
+
 
 def main(args):
     # Create instance
@@ -30,7 +36,12 @@ def main(args):
 
     # Set initial conditions and initialise
     setInitConds(s, args, verbose=True)
+    s.initialize()
 
+    # Refine grid around bump
+    #ri = np.logspace(0., 3., args.Nr) * c.au
+    #s.grid.ri = refinegrid(ri, (args.iniBumpPeakPos+3) * c.au )
+    #print(s.grid.ri)
     # Bind systoles and diastoles for planetesimal formation
     if args.planForm:
         setPlanForm(s)
@@ -40,10 +51,8 @@ def main(args):
     s.update()
 
     # Bind initial gas profile and reinitialize
-    #s.ini.gas.Sigma = initialGas(s, args.iniBumpPeakPos * c.au, args.amplitude, args.width)
     s.gas.Sigma = initialGas(s, args.iniBumpPeakPos * c.au, args.amplitude, args.width)
-    s.ini.dust.allowDriftLimitedParticles = True
-    s.initialize()
+    s.dust.allowDriftLimitedParticles = True
 
     # Specify where to put the data and simulation related info
     setSimulationParams(s, args)
@@ -85,21 +94,13 @@ def setInitConds(s, args, verbose):
     s.ini.grid.rmin = c.au * args.rmin
     s.ini.grid.rmax = c.au * args.rmax
     s.ini.grid.Nr = args.Nr
+    # TODO: Refine grid around bump
+    #ri = np.logspace(0., 3., Nr) * c.au
     s.makegrids()
 
     # Mass grid
     s.ini.grid.Nm = args.Nm
     s.ini.grid.mmax = args.massMax  # default is 1e5
-    if args.dustEvolution:
-        # Emailed Stammler to see if necessary
-        # Only enters for alpha0=1e-4
-        if args.alpha < 3e-4:
-            s.ini.grid.mmax = 1e14
-        else:
-            # This is where alpha0=1e-3 goes
-            s.ini.grid.mmax = 1e8
-    else:
-        s.ini.grid.mmax = 1e1
 
     # Gas
     s.ini.gas.Mdisk = args.MdiskInMstar * c.M_sun  # args.MdiskInMstar set in solar masses so convert to grams
@@ -116,8 +117,6 @@ def setInitConds(s, args, verbose):
 
     # Bump
     bumpParams.init(A=args.amplitude, w=args.width, p=args.iniBumpPeakPos, v=args.bumpVelFactor)
-
-    s.initialize()
 
     if verbose:
         print("minyear = %d" % args.minyear)
@@ -150,20 +149,25 @@ def setPlanForm(s):
     s: Instance of the Simulation class
     """
 
-    # The functions we created above use fields that do not exist in a DustPy a-priori
-    # We need to create the grids before the initialization
-    s.dust.dSigmaDust = np.zeros((s.ini.grid.Nr, s.ini.grid.Nm))
-    s.dust.SigmaPlan = np.ones(s.ini.grid.Nr) * 1.e-100
+    # Adding planetesimals
+    s.addgroup("planetesimals", description="Planetesimal quantities")
+    s.planetesimals.addfield("M", 0., description="Total planetesimal mass [g]")
+    s.planetesimals.addfield("Sigma", np.zeros_like(s.gas.Sigma),
+                             description="Planetesimal surface density [g/cm²]")
+    s.planetesimals.M.updater.updater = M_plan
+    s.updater = ["star", "grid", "gas", "dust", "planetesimals"]
+    s.planetesimals.updater = ["M"]
 
-    # Calculate dust sources
-    s.dust.updater.systole = setPlanetesimalFormation
+    # Adding planetesimal formation
+    s.dust.S.ext.updater.updater = S_ext
+    s.planetesimals.Sigma.differentiator = dSigmaPlan
 
-    # Apply them
-    s.dust.S.ext = dustSources(s)
-
-    # Update after timestep
-    s.dust.updater.diastole = addPlanetesimals
-
+    # Create an integration instruction and add it to the integrator
+    inst_planetesimals = Instruction(
+        schemes.expl_1_euler,
+        s.planetesimals.Sigma,
+        description="Planetesimals: explicit 1st-order Euler method")
+    s.integrator.instructions.append(inst_planetesimals)
 
 
 def setSimulationParams(s, args):
@@ -228,6 +232,39 @@ class Bump:
         self.amplitude = args.amplitude
         self.position = args.iniBumpPeakPos
         self.width = args.width
+
+
+def refinegrid(ri, r0, num=3):
+    """Function to refine the radial grid
+
+    Parameters
+    ----------
+    ri : array
+        Radial grid
+    r0 : float
+        Radial location around which grid should be refined
+    num : int, option, default : 3
+        Number of refinement iterations
+
+    Returns
+    -------
+    ri : array
+        New refined radial grid"""
+    if num == 0:
+        return ri
+    ind = np.argmin(r0 > ri) - 1
+    indl = ind - num
+    indr = ind + num + 1
+    ril = ri[:indl]
+    rir = ri[indr:]
+    N = (2 * num + 1) * 2
+    rim = np.empty(N)
+    for i in range(0, N, 2):
+        j = ind - num + np.int(i / 2)
+        rim[i] = ri[j]
+        rim[i + 1] = 0.5 * (ri[j] + ri[j + 1])
+    ri = np.concatenate((ril, rim, rir))
+    return refinegrid(ri, r0, num=num - 1)
 
 
 if __name__ == "__main__":
