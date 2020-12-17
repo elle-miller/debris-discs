@@ -7,7 +7,7 @@ from dustpy.std.sim import dt
 import bumpParams
 
 
-def initialGas(s, IniBumpPeakPos, A, width):
+def initialGas(s, IniBumpPeakPos, A, width, invert):
     """
     Initial gas profile at t = 0. Must call after first initialize so all parameters are set
 
@@ -25,7 +25,7 @@ def initialGas(s, IniBumpPeakPos, A, width):
     SigmaGas_unperturbed = (r / s.ini.gas.SigmaRc) ** s.ini.gas.SigmaExp * np.exp(-(r / s.ini.gas.SigmaRc) ** (2+s.ini.gas.SigmaExp))
     BumpPeakPos = getPeakPosition(s, IniBumpPeakPos=IniBumpPeakPos, TimeBumpForm=0, BumpVelFactor=0)
     # sigma with gap
-    SigmaGas_perturbed=SigmaGas_unperturbed *  Gauss(s, r, BumpPeakPos, A, width) 
+    SigmaGas_perturbed=SigmaGas_unperturbed * Gauss(s, r, BumpPeakPos, A, width, invert)
 
     # normalize to get the right total disk mass
     M_gas = s.ini.gas.Mdisk / (s.ini.dust.d2gRatio + 1.)  # total gas mass in grams for given d2g
@@ -45,7 +45,7 @@ def initialGas(s, IniBumpPeakPos, A, width):
     return iniGas
 
 
-def Gauss(s, r, BumpPeakPos, A, width):
+def Gauss(s, r, BumpPeakPos, A, width, invert):
     """
     Gaussian bump.
 
@@ -63,8 +63,12 @@ def Gauss(s, r, BumpPeakPos, A, width):
     # Make sure bump at center of radial bin
     iBumpPeakPos = (np.abs(r - BumpPeakPos)).argmin()
     rpeak = r[iBumpPeakPos]
-    w_gap = width * Hp(s)  # Gas pressure scale height
-    return exp(-log(A) * exp(-0.5 * ((r - rpeak) / w_gap) ** 2))
+    w_gap = width   # Hp(s)  # Gas pressure scale height
+    if invert:
+        i = -1
+    else:
+        i = 1
+    return exp(-1 * i * log(A) * exp(-0.5 * ((r - rpeak) / w_gap) ** 2))
 
 
 def BumpRadVel(s, iBumpPeakPos, BumpVelFactor):
@@ -80,8 +84,9 @@ def BumpRadVel(s, iBumpPeakPos, BumpVelFactor):
     # print(s.gas.Hp[iBumpPeakPos])
     # print(s.grid.r[iBumpPeakPos])
     # print(s.grid.OmegaK[iBumpPeakPos])
-    return -1.5 * BumpVelFactor * s.ini.gas.alpha[0] * (s.gas.Hp[iBumpPeakPos] / s.grid.r[iBumpPeakPos]) ** 2 * \
-        s.grid.OmegaK[iBumpPeakPos] * s.grid.r[iBumpPeakPos]
+    return 0
+    # return -1.5 * BumpVelFactor * s.ini.gas.alpha[0] * (s.gas.Hp[iBumpPeakPos] / s.grid.r[iBumpPeakPos]) ** 2 * \
+    #     s.grid.OmegaK[iBumpPeakPos] * s.grid.r[iBumpPeakPos]
 
 
 def getPeakPosition(s, IniBumpPeakPos, TimeBumpForm, BumpVelFactor):
@@ -128,7 +133,7 @@ def renormalizeGasProfile(s, M_gas, IniBumpPeakPos, BumpVelFactor, A, width, Tim
         s.gas.Sigma = (r / s.ini.gas.SigmaR0) ** s.ini.gas.SigmaExp * np.exp(
             -(r / s.ini.gas.SigmaR0) ** (2 + s.ini.gas.SigmaExp))
         BumpPeakPos = getPeakPosition(s, IniBumpPeakPos, TimeBumpForm, BumpVelFactor)
-        s.gas.Sigma += Gauss(s, r, BumpPeakPos, A, width)
+        s.gas.Sigma += Gauss(s, r, BumpPeakPos, A, width, invert)
         SigmaNormConst = M_gas / np.trapz(2 * np.pi * s.grid.r * s.gas.Sigma, x=s.grid.r)
         s.gas.Sigma = SigmaNormConst * s.gas.Sigma
     return s.gas.Sigma
@@ -153,8 +158,9 @@ def alphaBumps(s):
     """
     IniBumpPeakPos = bumpParams.position*c.au
     A = bumpParams.amplitude
-    width = bumpParams.width
+    width = bumpParams.width*c.au
     BumpVelFactor = bumpParams.velocity
+    invert = bumpParams.invert
     BumpCreatedViaAlpha = True
     TimeBumpForm = 0
     r = s.grid.r
@@ -170,5 +176,9 @@ def alphaBumps(s):
             print("Exiting")
             exit()
         else:
-            bumpyAlpha = s.ini.gas.alpha / Gauss(s, r, BumpPeakPos, A, width)
+            bumpyAlpha = s.ini.gas.alpha / Gauss(s, r, BumpPeakPos, A, width, invert)
+
+    # fig, ax = plt.subplots()
+    # ax.plot(r/c.au, bumpyAlpha)
+    # plt.show()
     return bumpyAlpha

@@ -13,5 +13,8 @@ source activate dustpy2
 # $3 - Amplitude
 # $4 - Velocity
 # $5 - Position
+# $6 - Number of snapshots
+# $7 - Planetesimal formation enable
+# $8 - Invert bump
 
-srun python ./main.py -z "$1" -a 1e-"$2" -b "$3" -v "$4" -p "$5" -n "$6" -4 "$7"
+srun python ./main.py -z "$1" -a 1e-"$2" -b "$3" -v "$4" -p "$5" -n "$6" -4 "$7" -i "$8"

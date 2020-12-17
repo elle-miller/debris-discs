@@ -38,10 +38,6 @@ def main(args):
     setInitConds(s, args, verbose=True)
     s.initialize()
 
-    # Refine grid around bump
-    #ri = np.logspace(0., 3., args.Nr) * c.au
-    #s.grid.ri = refinegrid(ri, (args.iniBumpPeakPos+3) * c.au )
-    #print(s.grid.ri)
     # Bind systoles and diastoles for planetesimal formation
     if args.planForm:
         setPlanForm(s)
@@ -51,7 +47,7 @@ def main(args):
     s.update()
 
     # Bind initial gas profile and reinitialize
-    s.gas.Sigma = initialGas(s, args.iniBumpPeakPos * c.au, args.amplitude, args.width)
+    s.gas.Sigma = initialGas(s, args.iniBumpPeakPos * c.au, args.amplitude, args.width * c.au, args.invertBump)
     s.dust.allowDriftLimitedParticles = True
 
     # Specify where to put the data and simulation related info
@@ -91,32 +87,36 @@ def setInitConds(s, args, verbose):
     verbose: bool
     """
     # Radial grid
+    s.ini.gas.SigmaRc = 60. * c.au
     s.ini.grid.rmin = c.au * args.rmin
     s.ini.grid.rmax = c.au * args.rmax
     s.ini.grid.Nr = args.Nr
+    ri = np.logspace(0., 3., args.Nr) * c.au
+    s.grid.ri = refinegrid(ri, (args.iniBumpPeakPos + 3. * args.width) * c.au)
+
     # TODO: Refine grid around bump
-    #ri = np.logspace(0., 3., Nr) * c.au
-    s.makegrids()
+    # s.makegrids()
 
     # Mass grid
-    s.ini.grid.Nm = args.Nm
-    s.ini.grid.mmax = args.massMax  # default is 1e5
+    # s.ini.grid.Nm = args.Nm
+    # s.ini.grid.mmax = args.massMax  # default is 1e5
 
     # Gas
     s.ini.gas.Mdisk = args.MdiskInMstar * c.M_sun  # args.MdiskInMstar set in solar masses so convert to grams
     s.ini.gas.alpha = args.alpha * np.ones_like(s.grid.r)
 
     # Dust (d2g ratio is dust.eps)
-    s.ini.dust.aIniMax = args.aIniMax
-    s.ini.dust.deltaRad = s.ini.gas.alpha  # radial particle diffusion
-    s.ini.dust.deltaTurb = s.ini.gas.alpha  # relative velocitiy turbulence
-    s.ini.dust.deltaVert = s.ini.gas.alpha  # vertical diffusion
+    # s.ini.dust.aIniMax = args.aIniMax
+    # s.ini.dust.deltaRad = s.ini.gas.alpha  # radial particle diffusion
+    # s.ini.dust.deltaTurb = s.ini.gas.alpha  # relative velocitiy turbulence
+    # s.ini.dust.deltaVert = s.ini.gas.alpha  # vertical diffusion
+    s.ini.dust.vfrag = 1000.
 
     # Star
-    s.ini.star.M = c.M_sun * args.starmass
+    # s.ini.star.M = c.M_sun * args.starmass
 
     # Bump
-    bumpParams.init(A=args.amplitude, w=args.width, p=args.iniBumpPeakPos, v=args.bumpVelFactor)
+    bumpParams.init(A=args.amplitude, w=args.width, p=args.iniBumpPeakPos, v=args.bumpVelFactor, i=args.invertBump)
 
     if verbose:
         print("minyear = %d" % args.minyear)
@@ -168,6 +168,7 @@ def setPlanForm(s):
         s.planetesimals.Sigma,
         description="Planetesimals: explicit 1st-order Euler method")
     s.integrator.instructions.append(inst_planetesimals)
+    s.update()
 
 
 def setSimulationParams(s, args):
@@ -196,7 +197,7 @@ def setSimulationParams(s, args):
         shutil.rmtree(outputDir)
 
     # Simulation settings
-    s.t.snapshots = np.linspace(args.minyear, args.maxyear, num=args.nsnap, endpoint=True) * c.year
+    s.t.snapshots = np.logspace(args.minyear, args.maxyear, num=args.nsnap, endpoint=True) * c.year
     print('snapshots=', len(s.t.snapshots))
     if not args.gasEvolution:
         del (s.integrator.instructions[1])
@@ -232,6 +233,7 @@ class Bump:
         self.amplitude = args.amplitude
         self.position = args.iniBumpPeakPos
         self.width = args.width
+        self.invert = args.invertBump
 
 
 def refinegrid(ri, r0, num=3):
@@ -270,10 +272,10 @@ def refinegrid(ri, r0, num=3):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-z', action="store", dest="outputDirNo", type=int, default=1, help="Simulation number")
-    parser.add_argument('-l', action="store", dest="rmin", type=int, default=10, help="Inner radius limit (AU)")
+    parser.add_argument('-l', action="store", dest="rmin", type=int, default=5, help="Inner radius limit (AU)")
     parser.add_argument('-c', action="store", dest="rmax", type=int, default=400, help="Outer radius limit (AU)")
     parser.add_argument('-s', action="store", dest="minyear", type=float, default=0, help="Beginning year")
-    parser.add_argument('-e', action="store", dest="maxyear", type=float, default=10e6, help="Ending year")
+    parser.add_argument('-e', action="store", dest="maxyear", type=float, default=7, help="Ending year")
     parser.add_argument('-n', action="store", dest="nsnap", type=int, default=100, help="Number of snapshots")
     parser.add_argument('-r', action="store", dest="Nr", type=int, default=100, help="Number of radial bins")
     parser.add_argument('-m', action="store", dest="Nm", type=int, default=120, help="Number of mass bins")
@@ -284,12 +286,13 @@ if __name__ == "__main__":
     parser.add_argument('-t', action="store", dest="timeBumpForm", type=float, default=0, help="Time bump appears")
     parser.add_argument('-v', action="store", dest="bumpVelFactor", type=float, default=0, help="% of nominal")
     parser.add_argument('-p', action="store", dest="iniBumpPeakPos", type=int, default=90, help="Starting center (AU)")
-    parser.add_argument('-i', action="store", dest="MdiskInMstar", type=float, default=0.1, help="Init disk mass (SM)")
+    parser.add_argument('-5', action="store", dest="MdiskInMstar", type=float, default=0.1, help="Init disk mass (SM)")
     parser.add_argument('-g', action="store", dest="aIniMax", type=float, default=1e-4, help="Max initial dust size")
     parser.add_argument('-x', action="store", dest="massMax", type=float, default=1e5, help="Max mass")
     parser.add_argument('-1', action="store", dest="gasEvolution", type=int, default=1, help="Create bump via alpha")
     parser.add_argument('-2', action="store", dest="dustEvolution", type=int, default=1, help="Advect/diffus transport")
     parser.add_argument('-3', action="store", dest="panel", type=int, default=0, help="Plot panel output")
     parser.add_argument('-4', action="store", dest="planForm", type=int, default="1", help="Planetesimal formation")
+    parser.add_argument('-i', action="store", dest="invertBump", type=int, default="0", help="Invert the gauss bump")
     arguments = parser.parse_args()
     main(arguments)
