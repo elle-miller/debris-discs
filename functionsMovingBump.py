@@ -25,7 +25,7 @@ def initialGas(s, IniBumpPeakPos, A, width, invert):
     SigmaGas_unperturbed = (r / s.ini.gas.SigmaRc) ** s.ini.gas.SigmaExp * np.exp(-(r / s.ini.gas.SigmaRc) ** (2+s.ini.gas.SigmaExp))
     BumpPeakPos = getPeakPosition(s, IniBumpPeakPos=IniBumpPeakPos, TimeBumpForm=0, BumpVelFactor=0)
     # sigma with gap
-    SigmaGas_perturbed=SigmaGas_unperturbed * Gauss(s, r, BumpPeakPos, A, width, invert)
+    SigmaGas_perturbed = SigmaGas_unperturbed * Gauss(s, r, BumpPeakPos, A, width, invert)
 
     # normalize to get the right total disk mass
     M_gas = s.ini.gas.Mdisk / (s.ini.dust.d2gRatio + 1.)  # total gas mass in grams for given d2g
@@ -63,7 +63,7 @@ def Gauss(s, r, BumpPeakPos, A, width, invert):
     # Make sure bump at center of radial bin
     iBumpPeakPos = (np.abs(r - BumpPeakPos)).argmin()
     rpeak = r[iBumpPeakPos]
-    w_gap = width/c.au * Hp(s)  # Gas pressure scale height
+    w_gap = width * Hp(s)  # Gas pressure scale height
     if invert:
         i = -1
     else:
@@ -158,7 +158,7 @@ def alphaBumps(s):
     """
     IniBumpPeakPos = bumpParams.position*c.au
     A = bumpParams.amplitude
-    width = bumpParams.width*c.au
+    width = bumpParams.width
     BumpVelFactor = bumpParams.velocity
     invert = bumpParams.invert
     BumpCreatedViaAlpha = True

@@ -47,7 +47,7 @@ def main(args):
     s.update()
 
     # Bind initial gas profile and reinitialize
-    s.gas.Sigma = initialGas(s, args.iniBumpPeakPos * c.au, args.amplitude, args.width * c.au, args.invertBump)
+    s.gas.Sigma = initialGas(s, args.iniBumpPeakPos * c.au, args.amplitude, args.width, args.invertBump)
     s.dust.allowDriftLimitedParticles = True
     s.update()
 
@@ -73,7 +73,7 @@ def main(args):
 
     # Plot planel of results
     if args.panel:
-        plot.panel(s.writer.datadir)
+        plot.ipanel(s.writer.datadir)
 
 
 ##################### OTHER FUNCTIONS #########################################
@@ -95,6 +95,9 @@ def setInitConds(s, args, verbose):
     ri = np.logspace(np.log10(args.rmin), np.log10(args.rmax), args.Nr) * c.au
     s.grid.ri = refinegrid(ri, (args.iniBumpPeakPos + 3. * args.width) * c.au)
     s.makegrids()
+
+    #ri = np.logspace(0., 3., 100) * c.au
+    #s.grid.ri = refinegrid(ri, (args.iniBumpPeakPos + 3. * args.width)*c.au)
 
     # optional plotting
     # fig, ax = plt.subplots()

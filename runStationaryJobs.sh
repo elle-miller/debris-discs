@@ -2,9 +2,15 @@
 
 # Bash script to run the mpi script multiple times for varying parameters
 # Date: Dec 14
-startingDir=30
-n=100
+
+# invert gas bump
+# p = 50, 100
+# A = 3, 10, 30
+
+startingDir=70
+n=31
 velocity=0
+planOn=1
 for alpha in 3 4; do
   for amplitude in 10 30; do
     for position in 30 60 90; do
