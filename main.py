@@ -49,6 +49,7 @@ def main(args):
     # Bind initial gas profile and reinitialize
     s.gas.Sigma = initialGas(s, args.iniBumpPeakPos * c.au, args.amplitude, args.width * c.au, args.invertBump)
     s.dust.allowDriftLimitedParticles = True
+    s.update()
 
     # Specify where to put the data and simulation related info
     setSimulationParams(s, args)
@@ -67,6 +68,7 @@ def main(args):
 
     # Run the simulation
     print("Evolving...")
+    s.update()
     s.run()
 
     # Plot planel of results
@@ -87,15 +89,19 @@ def setInitConds(s, args, verbose):
     verbose: bool
     """
     # Radial grid
-    s.ini.gas.SigmaRc = 60. * c.au
     s.ini.grid.rmin = c.au * args.rmin
     s.ini.grid.rmax = c.au * args.rmax
     s.ini.grid.Nr = args.Nr
-    ri = np.logspace(0., 3., args.Nr) * c.au
+    ri = np.logspace(np.log10(args.rmin), np.log10(args.rmax), args.Nr) * c.au
     s.grid.ri = refinegrid(ri, (args.iniBumpPeakPos + 3. * args.width) * c.au)
+    s.makegrids()
 
-    # TODO: Refine grid around bump
-    # s.makegrids()
+    # optional plotting
+    # fig, ax = plt.subplots()
+    # ax.plot(s.grid.r / c.au, np.ones_like(s.grid.r), 'b*', label='r new')
+    # ax.plot(s.grid.ri / c.au, np.ones_like(s.grid.ri), 'ro', label='ri refined')
+    # ax.legend()
+    # plt.show()
 
     # Mass grid
     # s.ini.grid.Nm = args.Nm
@@ -106,14 +112,14 @@ def setInitConds(s, args, verbose):
     s.ini.gas.alpha = args.alpha * np.ones_like(s.grid.r)
 
     # Dust (d2g ratio is dust.eps)
-    # s.ini.dust.aIniMax = args.aIniMax
-    # s.ini.dust.deltaRad = s.ini.gas.alpha  # radial particle diffusion
-    # s.ini.dust.deltaTurb = s.ini.gas.alpha  # relative velocitiy turbulence
-    # s.ini.dust.deltaVert = s.ini.gas.alpha  # vertical diffusion
+    s.ini.dust.aIniMax = args.aIniMax
+    s.ini.dust.deltaRad = s.ini.gas.alpha  # radial particle diffusion
+    s.ini.dust.deltaTurb = s.ini.gas.alpha  # relative velocitiy turbulence
+    s.ini.dust.deltaVert = s.ini.gas.alpha  # vertical diffusion
     s.ini.dust.vfrag = 1000.
 
     # Star
-    # s.ini.star.M = c.M_sun * args.starmass
+    s.ini.star.M = c.M_sun * args.starmass
 
     # Bump
     bumpParams.init(A=args.amplitude, w=args.width, p=args.iniBumpPeakPos, v=args.bumpVelFactor, i=args.invertBump)
@@ -272,11 +278,11 @@ def refinegrid(ri, r0, num=3):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-z', action="store", dest="outputDirNo", type=int, default=1, help="Simulation number")
-    parser.add_argument('-l', action="store", dest="rmin", type=int, default=5, help="Inner radius limit (AU)")
+    parser.add_argument('-l', action="store", dest="rmin", type=int, default=10, help="Inner radius limit (AU)")
     parser.add_argument('-c', action="store", dest="rmax", type=int, default=400, help="Outer radius limit (AU)")
     parser.add_argument('-s', action="store", dest="minyear", type=float, default=0, help="Beginning year")
     parser.add_argument('-e', action="store", dest="maxyear", type=float, default=7, help="Ending year")
-    parser.add_argument('-n', action="store", dest="nsnap", type=int, default=100, help="Number of snapshots")
+    parser.add_argument('-n', action="store", dest="nsnap", type=int, default=31, help="Number of snapshots")
     parser.add_argument('-r', action="store", dest="Nr", type=int, default=100, help="Number of radial bins")
     parser.add_argument('-m', action="store", dest="Nm", type=int, default=120, help="Number of mass bins")
     parser.add_argument('-o', action="store", dest="starmass", type=float, default=1, help="Star Mass in solar units")

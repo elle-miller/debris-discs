@@ -63,7 +63,7 @@ def Gauss(s, r, BumpPeakPos, A, width, invert):
     # Make sure bump at center of radial bin
     iBumpPeakPos = (np.abs(r - BumpPeakPos)).argmin()
     rpeak = r[iBumpPeakPos]
-    w_gap = width   # Hp(s)  # Gas pressure scale height
+    w_gap = width/c.au * Hp(s)  # Gas pressure scale height
     if invert:
         i = -1
     else:
