@@ -1,15 +1,21 @@
 from dustpy import plot
-from dustpy import hdf5writer
+from dustpy import hdf5writer as w
 from dustpy import readdump
 from dustpy import constants as c
+from jobInfo import getJobParams
 import numpy as np
 import argparse
 import matplotlib.pyplot as plt
+from movieBump import movieBump
+
+# cd /mnt/beegfs/bachelor/scratch/miller/dustpy2/debris-discs/
 
 # Global settings
 M_earth = 5.9722e24 * 1e3  # [g]
-localDir = '/media/elle/Seagate Backup Plus Drive/2020/mpia/debris-discs'
+
 localDir = '/mnt/beegfs/bachelor/scratch/miller/dustpy2/debris-discs'
+localDir = '/media/elle/Seagate Backup Plus Drive/2020/mpia/debris-discs'
+
 colWidth = 244  # pt
 fontsize = 12
 labelsize = 14
@@ -23,82 +29,132 @@ plt.rc('ytick', labelsize=labelsize)
 
 
 def main(args):
-    hdf5writer.datadir = localDir + '/sims/' + str(args.z)
+    z = args.z
+    w.datadir = localDir + '/sims/' + str(z)
     outputDir = localDir + '/simplots/'
-    filename = outputDir + 'r' + str(args.z) + '.png'
-    data = hdf5writer.read.all()
+
+    if args.plotMovie:
+        # movie(outputDir, fps=100)
+        movieBump(z, outputDir + 'movies/sdr/', fps=100)
 
     # Get basic data from files
-    t = data.t / c.year
+    t = w.read.sequence('t') / c.year
     Nt = t.shape[0]
     tMyr = t / 1e6
     tMyrEnd = tMyr[Nt - 1]
-<<<<<<< HEAD
-    print("tMyrEnd=",tMyrEnd)
-=======
     print("tMyrEnd = ", tMyrEnd)
->>>>>>> 761c461428aa2f7211a3766ad3340a57124e1775
-    d2g = data.dust.eps
-    rInt = data.grid.ri  # Radial grid cell interfaces [cm]
-    m = data.grid.m  # Mass grid field [g]
+    d2g = w.read.sequence('dust.eps')
+    rInt = w.read.sequence('grid.ri')  # Radial grid cell interfaces [cm]
+    m = w.read.sequence('grid.m')  # Mass grid field [g]
     Nm = m.shape[1]  # Number of mass bins
     A = np.mean(m[:, 1:] / m[:, :-1], axis=1)[..., None, None]  # Grid constant
     dm = 2. * (A - 1.) / (A + 1.)  # mass bin width
-    r = data.grid.r  # Radial grid cell centers [cm]
+    r = w.read.sequence('grid.r')  # Radial grid cell centers [cm]
     R = r / c.au  # Radial grid cell centers [AU]
     Nr = R.shape[1]
 
     # Dust information
-    SigmaDust = data.dust.Sigma
+    SigmaDust = w.read.sequence('dust.Sigma')
     SigmaDustTot = np.sum(SigmaDust, axis=2)
     DustDiskMass = np.sum(np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * SigmaDustTot[:, :], axis=1) / c.M_sun
-<<<<<<< HEAD
-    print("Mass of initial dust disc in Earth masses: %.2f" % DustDiskMass[0] * c.M_sun / M_earth)
-    print("Mass of final dust disc in Earth masses: %.2f" % DustDiskMass[-1] * c.M_sun / M_earth)
-=======
     DustDiskMassEarth = np.sum(np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * SigmaDustTot[:, :], axis=1) / M_earth
     print("Initial dust disc mass (Earths): ", DustDiskMassEarth[0])
     print("Final dust disc mass (Earths): ", DustDiskMassEarth[-1])
->>>>>>> 761c461428aa2f7211a3766ad3340a57124e1775
+
     SigmaDustDist = SigmaDust / dm
-    particleSize = data.dust.a  # Particle size field [cm]
+    particleSize = w.read.sequence('dust.a')  # Particle size field [cm]
 
     # Gas information
-    SigmaGas = data.gas.Sigma
+    SigmaGas = w.read.sequence('gas.Sigma')
     SigmaGasTot = np.sum(SigmaGas, axis=-1)
     GasDiskMass = np.sum(np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * SigmaGas[:, :], axis=1) / c.M_sun
+    GasDiskMassEarth = np.sum(np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * SigmaGas[:, :], axis=1) / M_earth
     SigmaGasDist = SigmaGas / dm
 
     # Planetesimal information
-    SigmaPlan = data.dust.SigmaPlan
+    SigmaPlan = w.read.sequence('planetesimals.Sigma')
     SigmaPlanTot = np.sum(SigmaPlan, axis=-1)
+    PlanMass = w.read.sequence('planetesimals.M') / M_earth
     PlanDiskMass = np.sum(np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * SigmaPlan[:, :], axis=1) / c.M_sun
     PlanDiskMassEarth = np.sum(np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * SigmaPlan[:, :], axis=1) / M_earth
-<<<<<<< HEAD
-    print("Mass of final planetesimal disc mass in Earth masses: %.2f" % PlanDiskMassEarth[-1])
-    print("SigmaPlanTot=",SigmaPlanTot)
-=======
     print("Mass of final planetesimal disc mass in Earth masses: %.10f" % PlanDiskMassEarth[-1])
-    print(SigmaPlanTot)
->>>>>>> 761c461428aa2f7211a3766ad3340a57124e1775
 
+    # Create strings for plots
+    [alpha, amplitude, position] = getJobParams(z)
+    ptot = f"{PlanDiskMassEarth[Nt - 1]:.1f}"
+    textstr = "Plan Disc Mass: " + str(ptot) + " Earths"
+    titlestr = str(z) + ": " + r"$\alpha$" + "={a}, A={A}, $r_p$={p}AU @ {t:.2f} Myr".format(a=alpha, A=amplitude,
+                                                                                             p=position,
+                                                                                             t=tMyrEnd)
     # Plot the surface density of dust and gas vs the distance from the star
     if args.plotSDR:
         fig, ax = plt.subplots()
         it = 0
-        ax.loglog(R[-1, ...], SigmaDustTot[it, ...], label="Dust")
-        ax.loglog(R[-1, ...], SigmaGas[it, ...], label="Gas")
-        ax.loglog(R[-1, ...], SigmaPlan[it, ...], label="Planetesimals")
-        ax.loglog(R[-1, ...], d2g[it, ...], label="d2g Ratio")
+        ax.loglog(R[-1, ...], SigmaDustTot[-1, ...], label="Dust")
+        ax.loglog(R[-1, ...], SigmaGas[-1, ...], label="Gas")
+        ax.loglog(R[-1, ...], SigmaPlan[-1, ...], label="Planetesimals")
+        ax.loglog(R[-1, ...], d2g[-1, ...], label="d2g Ratio")
         ax.set_ylim(1.e-6, 1.e4)
         ax.set_xlabel("Distance from star [AU]")
         ax.set_ylabel("Surface Density [g/cm²]")
         ax.legend()
-        # ax.set_title(titlestr)
-        # ax.text(0.05, 0.9, textstr, transform=ax.transAxes, fontsize=10)
+        ax.set_title(titlestr)
+        ax.text(0.05, 0.9, textstr, transform=ax.transAxes, fontsize=10)
         fig.tight_layout()
-       # plt.savefig(filename, format='png', dpi=600)
+        filename = outputDir + 'sdr/r' + str(args.z) + '.png'
+        plt.savefig(filename, format='png', dpi=600)
         plt.show()
+
+    # Time evolution of gas and dust disk mass
+    if args.plotMass:
+        fig02, ax02 = plt.subplots()
+        ax02.loglog(t, GasDiskMassEarth, label="Gas", color="C0")
+        ax02.loglog(t, DustDiskMassEarth, label="Dust", color="C4")
+        # if numRings == 2:
+        #     ax02.loglog(t, RingDiskMass * c.M_sun / M_earth, ls='--', label="Total Ring Dust", color="C1")
+        #     ax02.loglog(t, Ring1DiskMass * c.M_sun / M_earth, ls='-.', label="Ring 1 Dust", color="C3")
+        #     ax02.loglog(t, Ring2DiskMass * c.M_sun / M_earth, ls=':', label="Ring 2 Dust", color="C5")
+        # else:
+        #     ax02.loglog(t, RingDiskMass * c.M_sun / M_earth, ls='--', label="Ring Dust", color="C1")
+        ax02.loglog(t, PlanDiskMassEarth, label="Planetesimals", color="C2")
+        xlim0 = t[min(1, len(t) - 1)]
+        xlim1 = t[-1]
+        ax02.set_xlim(xlim0, xlim1)
+        # ylim0 = 10. ** np.floor(np.log10(np.min(np.minimum(GasDiskMass, DustDiskMass, PlanDiskMass))))
+        # ylim1 = 10. ** np.ceil(np.log10(np.max(np.maximum(GasDiskMass, DustDiskMass, PlanDiskMass))))
+        ax02.set_ylim(1e0, 3e5)
+        ax02.legend(loc='lower left')
+        ax02.lineTime = ax02.axvline(t[0], color="C7", zorder=-1, lw=1)
+        ax02.set_title(titlestr)
+        ax02.set_xlabel("Time [yr]")
+        ax02.set_ylabel("Mass [M$_\oplus$]")
+        ax02.grid(b=False)
+        filename = outputDir + 'mass/m' + str(args.z) + '.png'
+        plt.savefig(filename, format='png', dpi=600)
+        plt.show()
+
+
+def fwhm(x, y, k=10):
+    """
+     Determine full-width-half-maximum of a peaked set of points, x and y.
+
+     Assumes that there is only one peak present in the datasset.  The function
+     uses a spline interpolation of order k.
+     """
+    half_max = max(y) / 2
+    s = splrep(x, y - half_max, k=3)
+    roots = sproot(s)
+
+    if len(roots) > 2:
+        # raise MultiplePeaks("The dataset appears to have multiple peaks, and thus the FWHM can't be determined.")
+        return [0, 0]
+
+    elif len(roots) < 2:
+        # raise NoPeaksFound("No proper peaks were found in the data set; likely "the dataset is flat (e.g. all zeros).")
+        return [0, 0]
+
+    else:
+        return [roots[1], roots[0]]
 
 
 if __name__ == "__main__":
@@ -438,9 +494,7 @@ if __name__ == "__main__":
 #
 #     ############################# PLOTTING ################################################
 #
-#     if plotMovie:
-#         movie(outputDir, fps=100)
-#         # movieBump(z, outputDir, fps=100)
+
 #
 #     # Plot the surface density of dust and gas vs the distance from the star
 #     if plotSDR:
@@ -637,24 +691,3 @@ if __name__ == "__main__":
 # # plt.show()
 #
 #
-# def fwhm(x, y, k=10):
-#     """
-#     Determine full-width-half-maximum of a peaked set of points, x and y.
-#
-#     Assumes that there is only one peak present in the datasset.  The function
-#     uses a spline interpolation of order k.
-#     """
-#     half_max = max(y) / 2
-#     s = splrep(x, y - half_max, k=3)
-#     roots = sproot(s)
-#
-#     if len(roots) > 2:
-#         # raise MultiplePeaks("The dataset appears to have multiple peaks, and thus the FWHM can't be determined.")
-#         return [0, 0]
-#
-#     elif len(roots) < 2:
-#         # raise NoPeaksFound("No proper peaks were found in the data set; likely "the dataset is flat (e.g. all zeros).")
-#         return [0, 0]
-#
-#     else:
-#         return [roots[1], roots[0]]
