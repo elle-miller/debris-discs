@@ -65,7 +65,7 @@ def main(args):
 
     # Bind alpha bump function to create gas gap
     # s.gas.alpha.updater.updater = alphaBumps
-    s.update()
+    # s.update()
 
     # Bind initial gas profile and reinitialize
     # s.gas.Sigma = initialGas(s, args.iniBumpPeakPos * c.au, args.amplitude, args.width, args.invertBump)
@@ -76,11 +76,11 @@ def main(args):
     setSimulationParams(s, args)
 
     # Exlcude attributes to save space in simulation
-    s.dust.backreaction.save = False
-    s.dust.S.coag.save = False
-    s.dust.p.frag.save = False
-    s.dust.p.stick.save = False
-    s.dust.v.rel.save = False
+    #s.dust.backreaction.save = False
+    #s.dust.S.coag.save = False
+    #s.dust.p.frag.save = False
+    #s.dust.p.stick.save = False
+    #s.dust.v.rel.save = False
     if not args.dustEvolution:
         s.dust.H.save = False
         s.dust.SigmaFloor.save = False
@@ -185,8 +185,8 @@ def setPlanForm(s):
     s.planetesimals.addfield("Sigma", np.zeros_like(s.gas.Sigma),
                              description="Planetesimal surface density [g/cm²]")
     s.planetesimals.M.updater.updater = M_plan
-    s.updater = ["star", "grid", "gas", "dust", "planetesimals"]
     s.planetesimals.updater = ["M"]
+    s.updater = ["star", "grid", "gas", "dust", "planetesimals"]
 
     # Adding planetesimal formation
     s.dust.S.ext.updater.updater = S_ext
@@ -227,8 +227,8 @@ def setSimulationParams(s, args):
         shutil.rmtree(outputDir)
 
     # Simulation settings
-    s.t.snapshots = np.logspace(args.minyear, args.maxyear, num=args.nsnap, endpoint=True) * c.year
-    print('snapshots=', len(s.t.snapshots))
+    #s.t.snapshots = np.logspace(args.minyear, args.maxyear, num=args.nsnap, endpoint=True) * c.year
+    #print('snapshots=', len(s.t.snapshots))
     if not args.gasEvolution:
         del (s.integrator.instructions[1])
 
