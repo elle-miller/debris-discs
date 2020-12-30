@@ -33,8 +33,6 @@ import bumpParams
 
 
 def main(args):
-    # Create instance
-    s = Simulation()
 
     # Initial conditions
     alpha0 = 1.e-3
@@ -45,14 +43,19 @@ def main(args):
     w = 2. * c.au
     A = 2.
 
-    # Set necessary stuff
+    # Create instance and set necessary stuff
+    s = Simulation()
     s.ini.gas.alpha = alpha0
     s.ini.gas.SigmaRc = Rc
     s.ini.gas.Mdisk = Mdisk
     s.ini.dust.vfrag = vfrag
+
+    # Refine radial grid
     ri = np.logspace(0., 3., 100) * c.au
     s.grid.ri = refinegrid(ri, r0 + 3. * w)
     s.initialize()
+
+    # Let simulation run until 1Myr to see PF
     s.t.snapshots = np.logspace(3., 6., 31) * c.year
 
     # alpha bump
@@ -63,33 +66,11 @@ def main(args):
     if args.planForm:
         setPlanForm(s)
 
-    # Bind alpha bump function to create gas gap
-    # s.gas.alpha.updater.updater = alphaBumps
-    # s.update()
-
-    # Bind initial gas profile and reinitialize
-    # s.gas.Sigma = initialGas(s, args.iniBumpPeakPos * c.au, args.amplitude, args.width, args.invertBump)
-    # s.dust.allowDriftLimitedParticles = True
-    # s.update()
-
     # Specify where to put the data and simulation related info
     setSimulationParams(s, args)
 
-    # Exlcude attributes to save space in simulation
-    #s.dust.backreaction.save = False
-    #s.dust.S.coag.save = False
-    #s.dust.p.frag.save = False
-    #s.dust.p.stick.save = False
-    #s.dust.v.rel.save = False
-    if not args.dustEvolution:
-        s.dust.H.save = False
-        s.dust.SigmaFloor.save = False
-        s.dust.v.rad.save = False
-        s.dust.D.save = False
-
     # Run the simulation
     print("Evolving...")
-    s.update()
     s.run()
 
     # Plot planel of results
@@ -98,76 +79,6 @@ def main(args):
 
 
 ##################### OTHER FUNCTIONS #########################################
-
-def setInitConds(s, args, verbose):
-    """
-    Set initial conditions of simulation model
-
-    Input:
-    ---------
-    s: Instance of the Simulation class
-    args: command line arguments
-    verbose: bool
-    """
-    # Radial grid
-    s.ini.grid.rmin = c.au * args.rmin
-    s.ini.grid.rmax = c.au * args.rmax
-    s.ini.grid.Nr = args.Nr
-    ri = np.logspace(np.log10(args.rmin), np.log10(args.rmax), args.Nr) * c.au
-    s.grid.ri = refinegrid(ri, (args.iniBumpPeakPos + 3. * args.width) * c.au)
-    s.makegrids()
-
-    #ri = np.logspace(0., 3., 100) * c.au
-    #s.grid.ri = refinegrid(ri, (args.iniBumpPeakPos + 3. * args.width)*c.au)
-
-    # optional plotting
-    # fig, ax = plt.subplots()
-    # ax.plot(s.grid.r / c.au, np.ones_like(s.grid.r), 'b*', label='r new')
-    # ax.plot(s.grid.ri / c.au, np.ones_like(s.grid.ri), 'ro', label='ri refined')
-    # ax.legend()
-    # plt.show()
-
-    # Mass grid
-    # s.ini.grid.Nm = args.Nm
-    # s.ini.grid.mmax = args.massMax  # default is 1e5
-
-    # Gas
-    s.ini.gas.Mdisk = args.MdiskInMstar * c.M_sun  # args.MdiskInMstar set in solar masses so convert to grams
-    s.ini.gas.alpha = args.alpha * np.ones_like(s.grid.r)
-
-    # Dust (d2g ratio is dust.eps)
-    s.ini.dust.aIniMax = args.aIniMax
-    s.ini.dust.deltaRad = s.ini.gas.alpha  # radial particle diffusion
-    s.ini.dust.deltaTurb = s.ini.gas.alpha  # relative velocitiy turbulence
-    s.ini.dust.deltaVert = s.ini.gas.alpha  # vertical diffusion
-    s.ini.dust.vfrag = 1000.
-
-    # Star
-    s.ini.star.M = c.M_sun * args.starmass
-
-    # Bump
-    bumpParams.init(A=args.amplitude, w=args.width, p=args.iniBumpPeakPos, v=args.bumpVelFactor, i=args.invertBump)
-
-    if verbose:
-        print("minyear = %d" % args.minyear)
-        print("maxyear = %d" % args.maxyear)
-        print("nsnap = %d" % args.nsnap)
-        print("planForm = %s" % args.planForm)
-        print("alpha = %f" % args.alpha)
-        print("amplitude = %f" % args.amplitude)
-        print("bumpVelFactor = %d" % args.bumpVelFactor)
-        print("timeBumpForm = %f" % args.timeBumpForm)
-        print("iniBumpPeakPos = %d" % args.iniBumpPeakPos)
-        print("MdiskInMstar = %f" % args.MdiskInMstar)
-        print("rmin = %d" % args.rmin)
-        print("rmax = %d" % args.rmax)
-        print("Nr = %d" % args.Nr)
-        print("Nm = %d" % args.Nm)
-        print("mmax = %d" % args.massMax)
-        print("starmass = %f" % args.starmass)
-        print("aIniMax = %f" % args.aIniMax)
-        print("dustEvolution = %d" % args.dustEvolution)
-        print("gasEvolution = %d" % args.gasEvolution)
 
 
 def setPlanForm(s):
@@ -225,45 +136,6 @@ def setSimulationParams(s, args):
     s.writer.datadir = outputDir
     if path.exists(outputDir):
         shutil.rmtree(outputDir)
-
-    # Simulation settings
-    #s.t.snapshots = np.logspace(args.minyear, args.maxyear, num=args.nsnap, endpoint=True) * c.year
-    #print('snapshots=', len(s.t.snapshots))
-    if not args.gasEvolution:
-        del (s.integrator.instructions[1])
-
-    if not args.dustEvolution:
-        # Turn off all dust evolution
-        s.dust.S.tot = 0.
-        s.dust.S.updater = None
-        s.dust.S.coag = 0
-        s.dust.S.coag.updater = None
-        s.dust.p.updater = None
-        s.dust.v.rel.updater = None
-        s.dust.v.frag.updater = None
-        s.dust.kernel.updater = None
-        s.dust.p.stick = 1.
-        s.dust.p.frag = 0.
-        s.dust.p.updater = None
-        s.dust.Fi.adv = 0
-        s.dust.Fi.adv.updater = None
-        s.dust.v.rad = 0
-        s.dust.v.rad.updater = None
-        s.dust.Fi.diff = 0.
-        s.dust.Fi.diff.updater = None
-        s.dust.D.updater = None
-        s.dust.S.hyd = 0.
-        s.dust.S.hyd.updater = None
-        s.dust.Fi.updater = None
-
-
-class Bump:
-    def __init__(self, args):
-        self.alpha = args.alpha
-        self.amplitude = args.amplitude
-        self.position = args.iniBumpPeakPos
-        self.width = args.width
-        self.invert = args.invertBump
 
 
 def refinegrid(ri, r0, num=3):
