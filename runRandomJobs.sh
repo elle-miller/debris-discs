@@ -18,7 +18,7 @@ invert=0
 for alpha in 3 4; do
   for amplitude in 30; do
     for position in 10 20 30 60 90; do
-      sbatch job.sh $startingDir $alpha $amplitude $velocity $position $n $planOn $invert $res
+      sbatch job.sh $startingDir $alpha $amplitude $velocity $position $n $planOn $invert
       ((startingDir+=1))
     done
   done
@@ -32,7 +32,7 @@ invert=1
 for alpha in 3 4; do
   for amplitude in 3 30; do
     for position in 50 100; do
-      sbatch job.sh $startingDir $alpha $amplitude $velocity $position $n $planOn $invert $res
+      sbatch job.sh $startingDir $alpha $amplitude $velocity $position $n $planOn $invert
       ((startingDir+=1))
     done
   done

@@ -1,3 +1,6 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+
 from dustpy import plot
 from dustpy import hdf5writer as w
 from dustpy import readdump
@@ -103,7 +106,7 @@ def main(args):
         fig.tight_layout()
         filename = outputDir + 'sdr/r' + str(args.z) + '.png'
         plt.savefig(filename, format='png', dpi=600)
-        plt.show()
+        #plt.show()
 
     # Time evolution of gas and dust disk mass
     if args.plotMass:
@@ -131,7 +134,7 @@ def main(args):
         ax02.grid(b=False)
         filename = outputDir + 'mass/m' + str(args.z) + '.png'
         plt.savefig(filename, format='png', dpi=600)
-        plt.show()
+        #plt.show()
 
 
 def fwhm(x, y, k=10):

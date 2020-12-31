@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-
+# -*- coding: utf-8 -*-
 
 ###############################################################################
 # main.py
@@ -96,10 +96,7 @@ def setInitConds(s, args, verbose):
     s.grid.ri = refinegrid(ri, (args.iniBumpPeakPos + 3. * args.width) * c.au)
     s.makegrids()
 
-    #ri = np.logspace(0., 3., 100) * c.au
-    #s.grid.ri = refinegrid(ri, (args.iniBumpPeakPos + 3. * args.width)*c.au)
-
-    # optional plotting
+    # optional plotting of effect of refinement
     # fig, ax = plt.subplots()
     # ax.plot(s.grid.r / c.au, np.ones_like(s.grid.r), 'b*', label='r new')
     # ax.plot(s.grid.ri / c.au, np.ones_like(s.grid.ri), 'ro', label='ri refined')
@@ -111,14 +108,12 @@ def setInitConds(s, args, verbose):
     # s.ini.grid.mmax = args.massMax  # default is 1e5
 
     # Gas
+    alpha0 = args.alpha
     s.ini.gas.Mdisk = args.MdiskInMstar * c.M_sun  # args.MdiskInMstar set in solar masses so convert to grams
-    s.ini.gas.alpha = args.alpha * np.ones_like(s.grid.r)
+    s.ini.gas.alpha = alpha0 * np.ones_like(s.grid.r)
 
     # Dust (d2g ratio is dust.eps)
-    s.ini.dust.aIniMax = args.aIniMax
-    s.ini.dust.deltaRad = s.ini.gas.alpha  # radial particle diffusion
-    s.ini.dust.deltaTurb = s.ini.gas.alpha  # relative velocitiy turbulence
-    s.ini.dust.deltaVert = s.ini.gas.alpha  # vertical diffusion
+    # s.ini.dust.aIniMax = args.aIniMax
     s.ini.dust.vfrag = 1000.
 
     # Star
@@ -206,8 +201,15 @@ def setSimulationParams(s, args):
         shutil.rmtree(outputDir)
 
     # Simulation settings
-    s.t.snapshots = np.logspace(args.minyear, args.maxyear, num=args.nsnap, endpoint=True) * c.year
+    s.t.snapshots = np.logspace(args.minyear, args.maxyear, num=args.nsnap) * c.year
     print('snapshots=', len(s.t.snapshots))
+
+    # Update the mixing params to match alpha (these used to be in "ini")
+    s.dust.deltaRad = args.alpha  # radial particle diffusion
+    s.dust.deltaTurb = args.alpha  # relative velocitiy turbulence
+    s.dust.deltaVert = args.alpha  # vertical diffusion
+
+    # Make the simulation shorter and smaller if not evolving gas or dust
     if not args.gasEvolution:
         del (s.integrator.instructions[1])
 
@@ -283,8 +285,8 @@ if __name__ == "__main__":
     parser.add_argument('-z', action="store", dest="outputDirNo", type=int, default=1, help="Simulation number")
     parser.add_argument('-l', action="store", dest="rmin", type=int, default=10, help="Inner radius limit (AU)")
     parser.add_argument('-c', action="store", dest="rmax", type=int, default=400, help="Outer radius limit (AU)")
-    parser.add_argument('-s', action="store", dest="minyear", type=float, default=0, help="Beginning year")
-    parser.add_argument('-e', action="store", dest="maxyear", type=float, default=7, help="Ending year")
+    parser.add_argument('-s', action="store", dest="minyear", type=float, default=3, help="Beginning year 10^x")
+    parser.add_argument('-e', action="store", dest="maxyear", type=float, default=7, help="Ending year 10^x")
     parser.add_argument('-n', action="store", dest="nsnap", type=int, default=31, help="Number of snapshots")
     parser.add_argument('-r', action="store", dest="Nr", type=int, default=100, help="Number of radial bins")
     parser.add_argument('-m', action="store", dest="Nm", type=int, default=120, help="Number of mass bins")

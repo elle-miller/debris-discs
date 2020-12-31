@@ -50,6 +50,7 @@ def main(args):
     s.ini.gas.Mdisk = Mdisk
     s.ini.dust.vfrag = vfrag
 
+
     # Refine radial grid
     ri = np.logspace(0., 3., 100) * c.au
     s.grid.ri = refinegrid(ri, r0 + 3. * w)

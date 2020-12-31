@@ -17,4 +17,5 @@ source activate dustpy2
 # $7 - Planetesimal formation enable
 # $8 - Invert bump
 
+touch temp.dmp
 srun python ./main.py -z "$1" -a 1e-"$2" -b "$3" -v "$4" -p "$5" -n "$6" -4 "$7" -i "$8"

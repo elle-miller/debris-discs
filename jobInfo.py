@@ -53,7 +53,7 @@ def getJobParams(outputDir):
     alphaL = [1e-3, 1e-4]
     amplitudeL = [10, 30]
     positionL = [30, 60, 90]
-    startingDir = 30
+    startingDir = 70
     for i in alphaL:
         for j in amplitudeL:
             for k in positionL:
