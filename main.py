@@ -16,6 +16,7 @@ except:
     from dustpy.simulation import Simulation
 from dustpy import constants as c
 from dustpy import plot
+from dustpy.std.dust import MRN_distribution
 from functionsMovingBump import alphaBumps, initialGas
 from functionsPlanFormation import M_plan, S_ext, dSigmaPlan
 from simframe import Instruction, schemes
@@ -48,7 +49,7 @@ def main(args):
 
     # Bind initial gas profile and reinitialize
     s.gas.Sigma = initialGas(s, args.iniBumpPeakPos * c.au, args.amplitude, args.width, args.invertBump)
-    s.dust.allowDriftLimitedParticles = True
+    s.dust.Sigma = MRN_distribution(s)
     s.update()
 
     # Specify where to put the data and simulation related info
@@ -115,6 +116,7 @@ def setInitConds(s, args, verbose):
     # Dust (d2g ratio is dust.eps)
     # s.ini.dust.aIniMax = args.aIniMax
     s.ini.dust.vfrag = 1000.
+    s.ini.dust.allowDriftingParticles=True
 
     # Star
     s.ini.star.M = c.M_sun * args.starmass
