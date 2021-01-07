@@ -93,8 +93,8 @@ def setInitConds(s, args, verbose):
     s.ini.grid.rmin = c.au * args.rmin
     s.ini.grid.rmax = c.au * args.rmax
     s.ini.grid.Nr = args.Nr
-    ri = np.logspace(np.log10(args.rmin), np.log10(args.rmax), args.Nr) * c.au
-    s.grid.ri = refinegrid(ri, (args.iniBumpPeakPos + 3. * args.width) * c.au)
+    # ri = np.logspace(np.log10(args.rmin), np.log10(args.rmax), args.Nr) * c.au
+    # s.grid.ri = refinegrid(ri, (args.iniBumpPeakPos + 7 * args.width) * c.au)
     s.makegrids()
 
     # optional plotting of effect of refinement
