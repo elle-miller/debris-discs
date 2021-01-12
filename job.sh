@@ -15,7 +15,6 @@ source activate dustpy2
 # $5 - Position
 # $6 - Number of snapshots
 # $7 - Radial resolution
-# $8 - Invert bump
 export OMP_NUM_THREADS=4
 
 touch temp.dmp
