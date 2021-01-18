@@ -81,12 +81,11 @@ def BumpRadVel(s, iBumpPeakPos, BumpVelFactor):
     """
     # print(BumpVelFactor)
     # print(repr(s.ini.gas.alpha))
-    # print(s.gas.Hp[iBumpPeakPos])
+    # print(s.gas.Hp[iBumpPeakPos]) # identical to Hp(s)[iBumpPeakPos]
     # print(s.grid.r[iBumpPeakPos])
     # print(s.grid.OmegaK[iBumpPeakPos])
-    return 0
-    # return -1.5 * BumpVelFactor * s.ini.gas.alpha[0] * (s.gas.Hp[iBumpPeakPos] / s.grid.r[iBumpPeakPos]) ** 2 * \
-    #     s.grid.OmegaK[iBumpPeakPos] * s.grid.r[iBumpPeakPos]
+    return -1.5 * BumpVelFactor * s.ini.gas.alpha[0] * (s.gas.Hp[iBumpPeakPos] / s.grid.r[iBumpPeakPos]) ** 2 * \
+        s.grid.OmegaK[iBumpPeakPos] * s.grid.r[iBumpPeakPos]
 
 
 def getPeakPosition(s, IniBumpPeakPos, TimeBumpForm, BumpVelFactor):
@@ -106,8 +105,7 @@ def getPeakPosition(s, IniBumpPeakPos, TimeBumpForm, BumpVelFactor):
     if s.t <= TimeBumpForm:
         s.gas.BumpPeakPos = IniBumpPeakPos
     elif s.t > TimeBumpForm:
-        iBumpPeakPos = (np.abs(s.grid.r - s.gas.BumpPeakPos)).argmin() # get current closest index where to calculate physical quantities
-        # s.gas.BumpPeakPos = IniBumpPeakPos
+        iBumpPeakPos = (np.abs(s.grid.r - s.gas.BumpPeakPos)).argmin()
         s.gas.BumpPeakPos += BumpRadVel(s, iBumpPeakPos=iBumpPeakPos, BumpVelFactor=BumpVelFactor) * s.t.prevstepsize
         # print("iBumpPeakPos= ", iBumpPeakPos)
         # print("Previous step size= ",repr(s.t.prevstepsize))
