@@ -24,6 +24,7 @@ def S_ext(s):
 
     # Change in dust surface densities
     ret = np.where(mask[:, None], -zeta*s.dust.Sigma * s.dust.St * s.grid.OmegaK[:, None], 0.)
+
     # Set to zero at boundaries
     ret[0, :] = 0.
     ret[-1, :] = 0.

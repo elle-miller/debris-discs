@@ -1,17 +1,24 @@
 #!/bin/bash -l
 
 # Bash script to run the mpi script multiple times for varying parameters
-# Date: Nov 8 - running on Nov19
+# Date: Jan 19
 alpha=4
-startingDir=43
-
-# Loop through two alphas, two amplitudes and three positions
-n=50
+startingDir=130
+n=31
+radialRes=100
 position=90
-for alpha in 3 4; do
-  for amplitude in 10 30; do
-    for velocity in 30 60 90; do
-      sbatch job.sh $startingDir $alpha $amplitude $velocity $position $n $planOn
+for alpha in 3; do
+  for amplitude in 3 30; do
+    for velocity in 0.1 0.3 1 3; do
+      sbatch job.sh $startingDir $alpha $amplitude $velocity $position $n $radialRes
+      ((startingDir+=1))
+    done
+  done
+done
+for alpha in 4; do
+  for amplitude in 3 30; do
+    for velocity in 1 3 10 30; do
+      sbatch job.sh $startingDir $alpha $amplitude $velocity $position $n $radialRes
       ((startingDir+=1))
     done
   done
