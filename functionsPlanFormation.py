@@ -11,7 +11,9 @@ def M_plan(s):
 def S_ext(s):
 
     # Critical dust-to-gas ratio
-    d2g_crit = 1.
+    d2g_crit_max = 1.
+    d2g_crit_cent = 0.75
+    d2g_crit_min = 0.5
 
     # Planetesimal formation efficiency
     zeta = 0.1
@@ -20,14 +22,17 @@ def S_ext(s):
     d2g_mid = s.dust.rho.sum(-1) / s.gas.rho
 
     # Mask that defines if planetesimal formation is triggered
-    mask = np.where(d2g_mid >= d2g_crit, True, False)
+    # mask = np.where(d2g_mid >= d2g_crit, True, False)
 
     # Change in dust surface densities
-    ret = np.where(mask[:, None], -zeta*s.dust.Sigma * s.dust.St * s.grid.OmegaK[:, None], 0.)
+    # ret = np.where(mask[:, None], -zeta*s.dust.Sigma * s.dust.St * s.grid.OmegaK[:, None], 0.)
+    switch = 0.5 * (1 + np.tanh((d2g_mid - 0.75) / 0.25))
+    # ret = -zeta*s.dust.Sigma * s.dust.St * s.grid.OmegaK[:, None] * 0.5 * (1 + np.tanh((d2g_mid-0.75)/0.25))
+    ret = -zeta * s.dust.Sigma * s.dust.St * s.grid.OmegaK[:, None] * switch[:, None]
 
     # Set to zero at boundaries
     ret[0, :] = 0.
-    ret[-1, :] = 0.
+    ret[-5, :] = 0.
 
     return ret
 
