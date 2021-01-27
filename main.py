@@ -74,7 +74,7 @@ def main(args):
 
     # Plot planel of results
     if args.panel:
-        plot.ipanel(s.writer.datadir)
+        plot.ipanel(s.writer.datadir, it=args.nsnap)
 
 
 ##################### OTHER FUNCTIONS #########################################
@@ -93,10 +93,11 @@ def setInitConds(s, args, verbose):
     s.ini.grid.rmin = c.au * args.rmin
     s.ini.grid.rmax = c.au * args.rmax
     s.ini.grid.Nr = args.Nr
-    # ri = np.logspace(np.log10(args.rmin), np.log10(args.rmax), args.Nr) * c.au
-    # s.grid.ri = refinegrid(ri, (args.iniBumpPeakPos + 7 * args.width) * c.au)
+    s.ini.grid.mmax = 1e6
     s.makegrids()
 
+    # ri = np.logspace(np.log10(args.rmin), np.log10(args.rmax), args.Nr) * c.au
+    # s.grid.ri = refinegrid(ri, (args.iniBumpPeakPos + 7 * args.width) * c.au)
     # optional plotting of effect of refinement
     # fig, ax = plt.subplots()
     # ax.plot(s.grid.r / c.au, np.ones_like(s.grid.r), 'b*', label='r new')
@@ -104,17 +105,12 @@ def setInitConds(s, args, verbose):
     # ax.legend()
     # plt.show()
 
-    # Mass grid
-    # s.ini.grid.Nm = args.Nm
-    # s.ini.grid.mmax = args.massMax  # default is 1e5
-
     # Gas
     alpha0 = args.alpha
     s.ini.gas.Mdisk = args.MdiskInMstar * c.M_sun  # args.MdiskInMstar set in solar masses so convert to grams
     s.ini.gas.alpha = alpha0 * np.ones_like(s.grid.r)
 
     # Dust (d2g ratio is dust.eps)
-    # s.ini.dust.aIniMax = args.aIniMax
     s.ini.dust.vfrag = 1000.
     s.ini.dust.allowDriftingParticles=True
 
