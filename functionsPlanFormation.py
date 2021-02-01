@@ -26,7 +26,7 @@ def S_ext(s):
     # mask = np.where(d2g_mid >= d2g_crit, True, False)
     # ret = np.where(mask[:, None], -zeta * s.dust.Sigma * s.dust.St * s.grid.OmegaK[:, None], 0.)
 
-    switch = 0.5 * (1. + np.tanh((np.log10(d2g_mid)) / 0.1))
+    switch = 0.5 * (1. + np.tanh((np.log10(d2g_mid)) / 0.03))
     ret = -zeta * s.dust.Sigma * s.dust.St * s.grid.OmegaK[:, None] * switch[:, None]
 
     # Set to zero at boundaries

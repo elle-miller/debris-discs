@@ -93,7 +93,7 @@ def setInitConds(s, args, verbose):
     s.ini.grid.rmin = c.au * args.rmin
     s.ini.grid.rmax = c.au * args.rmax
     s.ini.grid.Nr = args.Nr
-    s.ini.grid.mmax = 1e6
+    s.ini.grid.mmax = 1e8
     s.makegrids()
 
     # ri = np.logspace(np.log10(args.rmin), np.log10(args.rmax), args.Nr) * c.au

@@ -1,12 +1,12 @@
 #!/bin/bash -l
 
 # Bash script to run the mpi script multiple times for varying parameters
-# Date: Jan 21 ~ high res with fixed PF (less sharp with tanh, cancelled 5 last bins)
+# Date: Feb 1 ~ Nr=200, 0.03 denom + mmax=1e10
 
-startingDir=150
+startingDir=184
 n=31
 velocity=0
-radialRes=300
+radialRes=200
 for alpha in 3 4; do
   for amplitude in 3 10 30; do
     for position in 30 60 90; do
