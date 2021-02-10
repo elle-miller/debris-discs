@@ -1,7 +1,5 @@
 #!/bin/bash -l
-#SBATCH --job-name=loop
-#SBATCH --mail-user elle.miller101@gmail.com
-#SBATCH --mail-type=ALL
+#SBATCH --job-name=movhighres
 
 module load anaconda3
 module load openmpi-4.0.1
@@ -18,5 +16,4 @@ source activate dustpy2
 # $8 - Plan on/off
 export OMP_NUM_THREADS=4
 
-touch temp.dmp
-srun python ./main.py -z "$1" -a 1e-"$2" -b "$3" -v "$4" -p "$5" -n "$6" -r "$7" -m "$8"
+srun python ./main.py -z "$1" -a 1e-"$2" -b "$3" -v "$4" -p "$5" -n "$6" -r "$7"
