@@ -96,15 +96,6 @@ def setInitConds(s, args, verbose):
     s.ini.grid.mmax = 1e8
     s.makegrids()
 
-    # ri = np.logspace(np.log10(args.rmin), np.log10(args.rmax), args.Nr) * c.au
-    # s.grid.ri = refinegrid(ri, (args.iniBumpPeakPos + 7 * args.width) * c.au)
-    # optional plotting of effect of refinement
-    # fig, ax = plt.subplots()
-    # ax.plot(s.grid.r / c.au, np.ones_like(s.grid.r), 'b*', label='r new')
-    # ax.plot(s.grid.ri / c.au, np.ones_like(s.grid.ri), 'ro', label='ri refined')
-    # ax.legend()
-    # plt.show()
-
     # Gas
     alpha0 = args.alpha
     s.ini.gas.Mdisk = args.MdiskInMstar * c.M_sun  # args.MdiskInMstar set in solar masses so convert to grams
@@ -118,7 +109,12 @@ def setInitConds(s, args, verbose):
     s.ini.star.M = c.M_sun * args.starmass
 
     # Bump
-    bumpParams.init(A=args.amplitude, w=args.width, p=args.iniBumpPeakPos, v=args.bumpVelFactor, i=args.invertBump)
+    s.addgroup("bump", description="Bump quantities")
+    s.bump.addfield("A", args.amplitude)
+    s.bump.addfield("width", args.width)
+    s.bump.addfield("pos", args.iniBumpPeakPos)
+    s.bump.addfield("v", args.bumpVelFactor)
+    s.bump.addfield("invert", args.invertBump)
 
     if verbose:
         print("minyear = %d" % args.minyear)
@@ -236,13 +232,13 @@ def setSimulationParams(s, args):
         s.dust.Fi.updater = None
 
 
-class Bump:
-    def __init__(self, args):
-        self.alpha = args.alpha
-        self.amplitude = args.amplitude
-        self.position = args.iniBumpPeakPos
-        self.width = args.width
-        self.invert = args.invertBump
+# class Bump:
+#     def __init__(self, args):
+#         self.alpha = args.alpha
+#         self.amplitude = args.amplitude
+#         self.position = args.iniBumpPeakPos
+#         self.width = args.width
+#         self.invert = args.invertBump
 
 
 def refinegrid(ri, r0, num=3):

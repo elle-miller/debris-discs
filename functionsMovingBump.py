@@ -154,11 +154,11 @@ def alphaBumps(s):
     width: float
     bump width scale factor
     """
-    IniBumpPeakPos = bumpParams.position*c.au
-    A = bumpParams.amplitude
-    width = bumpParams.width
-    BumpVelFactor = bumpParams.velocity
-    invert = bumpParams.invert
+    IniBumpPeakPos = s.bump.pos * c.au
+    A = s.bump.A
+    width = s.bump.width
+    BumpVelFactor = s.bump.v
+    invert = s.bump.invert
     BumpCreatedViaAlpha = True
     TimeBumpForm = 0
     r = s.grid.r
