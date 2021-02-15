@@ -98,15 +98,12 @@ def setInitConds(s, args, verbose):
 
     # Gas
     alpha0 = args.alpha
-    s.ini.gas.Mdisk = args.MdiskInMstar * c.M_sun  # args.MdiskInMstar set in solar masses so convert to grams
+    s.ini.gas.Mdisk = 0.1 * c.M_sun
     s.ini.gas.alpha = alpha0 * np.ones_like(s.grid.r)
 
     # Dust (d2g ratio is dust.eps)
-    s.ini.dust.vfrag = 1000.
+    s.ini.dust.vfrag = args.vfrag
     s.ini.dust.allowDriftingParticles=True
-
-    # Star
-    s.ini.star.M = c.M_sun * args.starmass
 
     # Bump
     s.addgroup("bump", description="Bump quantities")
@@ -126,14 +123,11 @@ def setInitConds(s, args, verbose):
         print("bumpVelFactor = %d" % args.bumpVelFactor)
         print("timeBumpForm = %f" % args.timeBumpForm)
         print("iniBumpPeakPos = %d" % args.iniBumpPeakPos)
-        print("MdiskInMstar = %f" % args.MdiskInMstar)
         print("rmin = %d" % args.rmin)
         print("rmax = %d" % args.rmax)
         print("Nr = %d" % args.Nr)
         print("Nm = %d" % args.Nm)
-        print("mmax = %d" % args.massMax)
-        print("starmass = %f" % args.starmass)
-        print("aIniMax = %f" % args.aIniMax)
+        print("vfrag = %d" % args.vfrag)
         print("dustEvolution = %d" % args.dustEvolution)
         print("gasEvolution = %d" % args.gasEvolution)
 
@@ -284,16 +278,13 @@ if __name__ == "__main__":
     parser.add_argument('-n', action="store", dest="nsnap", type=int, default=31, help="Number of snapshots")
     parser.add_argument('-r', action="store", dest="Nr", type=int, default=100, help="Number of radial bins")
     parser.add_argument('-m', action="store", dest="Nm", type=int, default=120, help="Number of mass bins")
-    parser.add_argument('-o', action="store", dest="starmass", type=float, default=1, help="Star Mass in solar units")
     parser.add_argument('-a', action="store", dest="alpha", type=float, default=0.001, help="Viscosity parameter")
     parser.add_argument('-b', action="store", dest="amplitude", type=float, default=10, help="log(Amplitude)")
     parser.add_argument('-w', action="store", dest="width", type=float, default=1., help="width factor")
     parser.add_argument('-t', action="store", dest="timeBumpForm", type=float, default=0, help="Time bump appears")
     parser.add_argument('-v', action="store", dest="bumpVelFactor", type=float, default=0, help="% of nominal")
     parser.add_argument('-p', action="store", dest="iniBumpPeakPos", type=int, default=90, help="Starting center (AU)")
-    parser.add_argument('-5', action="store", dest="MdiskInMstar", type=float, default=0.1, help="Init disk mass (SM)")
-    parser.add_argument('-g', action="store", dest="aIniMax", type=float, default=1e-4, help="Max initial dust size")
-    parser.add_argument('-x', action="store", dest="massMax", type=float, default=1e5, help="Max mass")
+    parser.add_argument('-f', action="store", dest="vfrag", type=int, default=1000, help="Fragmentation velocity (cm/s)")
     parser.add_argument('-1', action="store", dest="gasEvolution", type=int, default=1, help="Create bump via alpha")
     parser.add_argument('-2', action="store", dest="dustEvolution", type=int, default=1, help="Advect/diffus transport")
     parser.add_argument('-3', action="store", dest="panel", type=int, default=0, help="Plot panel output")
