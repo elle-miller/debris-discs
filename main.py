@@ -128,7 +128,6 @@ def setInitConds(s, args, verbose):
         print("timeStartMoving = %f" % args.timeStartMoving)
         print("iniBumpPeakPos = %d" % args.iniBumpPeakPos)
         print("Nr = %d" % args.Nr)
-        print("Nm = %d" % args.Nm)
         print("vfrag = %d" % args.vfrag)
         print("dustEvolution = %d" % args.dustEvolution)
         print("gasEvolution = %d" % args.gasEvolution)
@@ -192,7 +191,7 @@ def setSimulationParams(s, args):
 
     # Simulation settings
     s.t.snapshots = np.logspace(args.minyear, args.maxyear, num=args.nsnap) * c.year
-    print('snapshots=', len(s.t.snapshots))
+    print('snapshots=', s.t.snapshots / c.year * 1e-6)
 
     # Update the mixing params to match alpha (these used to be in "ini")
     s.dust.deltaRad = args.alpha  # radial particle diffusion
@@ -234,8 +233,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', action="store", dest="minyear", type=float, default=3, help="Beginning year 10^x")
     parser.add_argument('-e', action="store", dest="maxyear", type=float, default=7, help="Ending year 10^x")
     parser.add_argument('-n', action="store", dest="nsnap", type=int, default=31, help="Number of snapshots")
-    parser.add_argument('-r', action="store", dest="Nr", type=int, default=100, help="Number of radial bins")
-    parser.add_argument('-m', action="store", dest="Nm", type=int, default=120, help="Number of mass bins")
+    parser.add_argument('-r', action="store", dest="Nr", type=int, default=200, help="Number of radial bins")
     parser.add_argument('-a', action="store", dest="alpha", type=float, default=0.001, help="Viscosity parameter")
     parser.add_argument('-b', action="store", dest="amplitude", type=float, default=10, help="log(Amplitude)")
     parser.add_argument('-w', action="store", dest="width", type=float, default=1., help="width factor")
