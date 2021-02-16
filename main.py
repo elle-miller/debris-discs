@@ -25,7 +25,6 @@ import numpy as np
 import argparse
 import shutil
 from os import path
-import bumpParams
 
 
 ##################### MAIN FUNCTION ###########################################
@@ -48,7 +47,7 @@ def main(args):
     s.update()
 
     # Bind initial gas profile and reinitialize
-    s.gas.Sigma = initialGas(s, args.iniBumpPeakPos * c.au, args.amplitude, args.width, args.invertBump)
+    s.gas.Sigma = initialGas(s)
     s.dust.Sigma = MRN_distribution(s)
     s.update()
 
@@ -89,9 +88,9 @@ def setInitConds(s, args, verbose):
     args: command line arguments
     verbose: bool
     """
-    # Radial grid
-    s.ini.grid.rmin = c.au * args.rmin
-    s.ini.grid.rmax = c.au * args.rmax
+    # Radial and mass grid
+    s.ini.grid.rmin = c.au * 10
+    s.ini.grid.rmax = c.au * 400
     s.ini.grid.Nr = args.Nr
     s.ini.grid.mmax = 1e8
     s.makegrids()
@@ -101,17 +100,22 @@ def setInitConds(s, args, verbose):
     s.ini.gas.Mdisk = 0.1 * c.M_sun
     s.ini.gas.alpha = alpha0 * np.ones_like(s.grid.r)
 
-    # Dust (d2g ratio is dust.eps)
+    # Dust
     s.ini.dust.vfrag = args.vfrag
-    s.ini.dust.allowDriftingParticles=True
+    s.ini.dust.allowDriftingParticles = True
 
     # Bump
     s.addgroup("bump", description="Bump quantities")
     s.bump.addfield("A", args.amplitude)
     s.bump.addfield("width", args.width)
-    s.bump.addfield("pos", args.iniBumpPeakPos)
-    s.bump.addfield("v", args.bumpVelFactor)
-    s.bump.addfield("invert", args.invertBump)
+    s.bump.addfield("iniPeakPos", args.iniBumpPeakPos * c.au)
+    s.bump.addfield("currentPeakPos", args.iniBumpPeakPos * c.au)
+    s.bump.addfield("f", args.bumpVelFactor)
+    s.bump.addfield("timeStartMoving", args.timeStartMoving * c.year)
+    if not args.invertBump:
+        s.bump.addfield("invert", 1)
+    else:
+        s.bump.addfield("invert", -1)
 
     if verbose:
         print("minyear = %d" % args.minyear)
@@ -121,10 +125,8 @@ def setInitConds(s, args, verbose):
         print("alpha = %f" % args.alpha)
         print("amplitude = %f" % args.amplitude)
         print("bumpVelFactor = %d" % args.bumpVelFactor)
-        print("timeBumpForm = %f" % args.timeBumpForm)
+        print("timeStartMoving = %f" % args.timeStartMoving)
         print("iniBumpPeakPos = %d" % args.iniBumpPeakPos)
-        print("rmin = %d" % args.rmin)
-        print("rmax = %d" % args.rmax)
         print("Nr = %d" % args.Nr)
         print("Nm = %d" % args.Nm)
         print("vfrag = %d" % args.vfrag)
@@ -226,53 +228,9 @@ def setSimulationParams(s, args):
         s.dust.Fi.updater = None
 
 
-# class Bump:
-#     def __init__(self, args):
-#         self.alpha = args.alpha
-#         self.amplitude = args.amplitude
-#         self.position = args.iniBumpPeakPos
-#         self.width = args.width
-#         self.invert = args.invertBump
-
-
-def refinegrid(ri, r0, num=3):
-    """Function to refine the radial grid
-
-    Parameters
-    ----------
-    ri : array
-        Radial grid
-    r0 : float
-        Radial location around which grid should be refined
-    num : int, option, default : 3
-        Number of refinement iterations
-
-    Returns
-    -------
-    ri : array
-        New refined radial grid"""
-    if num == 0:
-        return ri
-    ind = np.argmin(r0 > ri) - 1
-    indl = ind - num
-    indr = ind + num + 1
-    ril = ri[:indl]
-    rir = ri[indr:]
-    N = (2 * num + 1) * 2
-    rim = np.empty(N)
-    for i in range(0, N, 2):
-        j = ind - num + np.int(i / 2)
-        rim[i] = ri[j]
-        rim[i + 1] = 0.5 * (ri[j] + ri[j + 1])
-    ri = np.concatenate((ril, rim, rir))
-    return refinegrid(ri, r0, num=num - 1)
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-z', action="store", dest="outputDirNo", type=int, default=1, help="Simulation number")
-    parser.add_argument('-l', action="store", dest="rmin", type=int, default=10, help="Inner radius limit (AU)")
-    parser.add_argument('-c', action="store", dest="rmax", type=int, default=400, help="Outer radius limit (AU)")
     parser.add_argument('-s', action="store", dest="minyear", type=float, default=3, help="Beginning year 10^x")
     parser.add_argument('-e', action="store", dest="maxyear", type=float, default=7, help="Ending year 10^x")
     parser.add_argument('-n', action="store", dest="nsnap", type=int, default=31, help="Number of snapshots")
@@ -281,7 +239,7 @@ if __name__ == "__main__":
     parser.add_argument('-a', action="store", dest="alpha", type=float, default=0.001, help="Viscosity parameter")
     parser.add_argument('-b', action="store", dest="amplitude", type=float, default=10, help="log(Amplitude)")
     parser.add_argument('-w', action="store", dest="width", type=float, default=1., help="width factor")
-    parser.add_argument('-t', action="store", dest="timeBumpForm", type=float, default=0, help="Time bump appears")
+    parser.add_argument('-t', action="store", dest="timeStartMoving", type=float, default=0, help="Time bump moves")
     parser.add_argument('-v', action="store", dest="bumpVelFactor", type=float, default=0, help="% of nominal")
     parser.add_argument('-p', action="store", dest="iniBumpPeakPos", type=int, default=90, help="Starting center (AU)")
     parser.add_argument('-f', action="store", dest="vfrag", type=int, default=1000, help="Fragmentation velocity (cm/s)")
@@ -289,6 +247,6 @@ if __name__ == "__main__":
     parser.add_argument('-2', action="store", dest="dustEvolution", type=int, default=1, help="Advect/diffus transport")
     parser.add_argument('-3', action="store", dest="panel", type=int, default=0, help="Plot panel output")
     parser.add_argument('-4', action="store", dest="planForm", type=int, default="1", help="Planetesimal formation")
-    parser.add_argument('-i', action="store", dest="invertBump", type=int, default="0", help="Invert the gauss bump")
+    parser.add_argument('-i', action="store", dest="invertBump", type=int, default="0", help="Enter 1 to invert")
     arguments = parser.parse_args()
     main(arguments)

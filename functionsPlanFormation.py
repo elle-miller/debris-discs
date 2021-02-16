@@ -12,19 +12,11 @@ def M_plan(s):
 
 def S_ext(s):
 
-    # Critical dust-to-gas ratio
-    d2g_crit = 1.
-    d2g_crit_cent = 0.75
-    d2g_crit_min = 0.5
-
     # Planetesimal formation efficiency
     zeta = 0.1
 
     # Midplane dust-to-gas ratio
     d2g_mid = s.dust.rho.sum(-1) / s.gas.rho
-
-    # mask = np.where(d2g_mid >= d2g_crit, True, False)
-    # ret = np.where(mask[:, None], -zeta * s.dust.Sigma * s.dust.St * s.grid.OmegaK[:, None], 0.)
 
     switch = 0.5 * (1. + np.tanh((np.log10(d2g_mid)) / 0.03))
     ret = -zeta * s.dust.Sigma * s.dust.St * s.grid.OmegaK[:, None] * switch[:, None]
