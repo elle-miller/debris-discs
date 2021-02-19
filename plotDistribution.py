@@ -101,9 +101,12 @@ def main(args):
     titlestr = getTitle(z, w)
 
     fig, ax = plt.subplots()
-    ax.set_title(titlestr, fontdict={'fontsize': fontsize})
-    ax.text(0.04, 0.85, textstr, color="white", transform=ax.transAxes)
-
+    filename = outputDir + 'dist/d' + str(args.z)
+    if args.title:
+        ax.set_title(titlestr, fontdict={'fontsize': fontsize})
+        filename += '_titled'
+    if args.text:
+        ax.text(0.04, 0.85, textstr, color="white", transform=ax.transAxes)
 
     pltcmap = ax.contourf(r / c.au, m, np.log10(sigmaD.T), levels=np.linspace(sd_max - 6, sd_max, 7), cmap="magma", extend="both")
     ax.contour(r / c.au, m, St.T, levels=[1.], colors="white", linewidths=2)
@@ -141,5 +144,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-z', action="store", dest="z", type=int, default=1, help="Simulation number")
     parser.add_argument('-s', action="store", dest="show", type=int, default=1, help="Show plot")
+    parser.add_argument('-t', action="store", dest="title", type=int, default=1, help="Show plot")
+    parser.add_argument('-x', action="store", dest="text", type=int, default=1, help="Show plot")
     arguments = parser.parse_args()
     main(arguments)

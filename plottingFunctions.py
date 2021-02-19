@@ -25,6 +25,27 @@ def getDataDir(z):
 def getTitle(z, writer):
     [alpha0, amplitude, position] = getJobParams(z)
     tMyrEnd = writer.read.sequence('t')[-1] / c.year * 1e-6
+
+    # Wide scripts
+    if z == 233:
+        return r"$\alpha$: {a}, A: {A}, r$_p$: {p} au, f: 100\% at {t:.1f} Myr [{z}]".format(a=alpha0, A=amplitude, p=position,
+                                                                                  t=tMyrEnd, z=str(z))
+    elif z == 232 or z == 234:
+        return r"$\alpha$: {a}, A: {A}, r$_p$: {p} au, f: 100\% after 1Myr, at {t:.1f} Myr [{z}]".format(a=alpha0, A=amplitude, p=position,
+                                                                                  t=tMyrEnd, z=str(z))
+
+    # Fragmentation scripts
+    if 220 <= z <= 231:
+        if np.mod(z, 2) == 0:
+            titlestr = r"v$_f$: 1 m/s, $\alpha$: {a}, A: {A}, r$_p$: {p} au at {t:.1f} Myr [{z}]".format(a=alpha0, A=amplitude,
+                                                                                       p=position, t=tMyrEnd, z=str(z))
+        else:
+            titlestr = r"v$_f$: 3 m/s, $\alpha$: {a}, A: {A}, r$_p$: {p} au at {t:.1f} Myr [{z}]".format(a=alpha0,
+                                                                                                         A=amplitude,
+                                                                                                         p=position,
+                                                                                                         t=tMyrEnd,
+                                                                                                         z=str(z))
+        return titlestr
     stationary = False
     if z > 201:
         stationary = False
@@ -41,7 +62,7 @@ def getTitle(z, writer):
 
 def getText(p, c1, w1, f1):
     ptot = f"{p:.0f}"
-    textstr = "Planetesimals: " + str(ptot) + r" M$_{\oplus}$" + "\n"
+    textstr = r"$\mathcal{M}$: " + str(ptot) + r" M$_{\oplus}$" + "\n"
     center = f"{c1:.0f}"
     width = f"{w1:.0f}"
     frac = f"{f1:.1f}"
@@ -115,7 +136,7 @@ def getEPS(filename):
         "format": "eps",
         "dpi": 300,
         "bbox": "tight",
-        "pad": 0.15
+        "pad": 0.1
     }
     return dict
 
@@ -125,6 +146,6 @@ def getPNG(filename):
         "format": "png",
         "dpi": 300,
         "bbox": "tight",
-        "pad": 0.15
+        "pad": 0.1
     }
     return dict

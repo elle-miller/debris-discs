@@ -75,13 +75,16 @@ def main(args):
     ax.set_ylim(1e-1, 1e7)
     ax.legend(loc='upper right')
     ax.lineTime = ax.axvline(t[0], color="C7", zorder=-1, lw=1)
-    ax.set_title(titlestr, fontdict={'fontsize': fontsize})
-    ax.text(0.04, 0.85, textstr, transform=ax.transAxes)
+    filename = outputDir + 'mass/m' + str(z)
+    if args.title:
+        ax.set_title(titlestr, fontdict={'fontsize': fontsize})
+        filename += '_untitled'
+    if args.text:
+        ax.text(0.04, 0.85, textstr, transform=ax.transAxes)
     ax.set_xlabel("Time [Myr]")
     ax.set_ylabel("Mass [M$_\oplus$]")
 
     # Saving figure
-    filename = outputDir + 'mass/m' + str(z)
     fig.tight_layout()
     e = getEPS(filename)
     p = getPNG(filename)
@@ -95,5 +98,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-z', action="store", dest="z", type=int, default=1, help="Simulation number")
     parser.add_argument('-s', action="store", dest="show", type=int, default=1, help="Show plot")
+    parser.add_argument('-t', action="store", dest="title", type=int, default=1, help="Show plot")
+    parser.add_argument('-x', action="store", dest="text", type=int, default=1, help="Show plot")
     arguments = parser.parse_args()
     main(arguments)

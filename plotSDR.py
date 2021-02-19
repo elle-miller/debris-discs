@@ -53,6 +53,7 @@ def main(args):
     PlanMass = w.read.sequence('planetesimals.M') / M_earth
 
     # Text plotting
+    filename = outputDir + 'sdr/r' + str(z)
     center, width, frac, istart, iend = getRingStats(SigmaPlan[-1], w)
     textstr = getText(PlanMass[-1], center, width, frac)
     titlestr = getTitle(z, w)
@@ -68,8 +69,11 @@ def main(args):
     ax.set_xlabel("Distance from star [au]")
     ax.set_ylabel("Surface density [g/cm²]")
     ax.legend(loc='upper right', frameon=True)
-    ax.set_title(titlestr, fontdict={'fontsize': fontsize})
-    ax.text(0.04, 0.85, textstr, transform=ax.transAxes)
+    if args.title:
+        ax.set_title(titlestr, fontdict={'fontsize': fontsize})
+        filename += '_titled'
+    if args.text:
+        ax.text(0.04, 0.85, textstr, transform=ax.transAxes)
     ax.xaxis.set_minor_formatter(ScalarFormatter())
     ax.xaxis.set_minor_formatter(("%.0f"))
     for axis in [ax.xaxis]:
@@ -77,11 +81,11 @@ def main(args):
         ax.set_xticks([30, 60, 90, 120])
 
     # Saving figure
-    filename = outputDir + 'sdr/r' + str(z)
     fig.tight_layout()
     e = getEPS(filename)
     p = getPNG(filename)
     plt.savefig(p["filename"], dpi=300, bbox_inches=p["bbox"], pad_inches=p["pad"])
+    # plt.savefig(e["filename"], dpi=300, bbox_inches=e["bbox"], pad_inches=e["pad"])
     if args.show:
         plt.show()
 
@@ -90,6 +94,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-z', action="store", dest="z", type=int, default=1, help="Simulation number")
     parser.add_argument('-s', action="store", dest="show", type=int, default=1, help="Show plot")
+    parser.add_argument('-t', action="store", dest="title", type=int, default=1, help="Show plot")
+    parser.add_argument('-x', action="store", dest="text", type=int, default=1, help="Show plot")
     arguments = parser.parse_args()
     main(arguments)
 

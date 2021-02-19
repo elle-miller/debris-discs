@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from dustpy import plot
-from dustpy import hdf5writer as w
 from dustpy import readdump
 from dustpy import constants as c
 from jobInfo import getJobParams
@@ -10,69 +9,72 @@ import numpy as np
 import argparse
 import matplotlib.pyplot as plt
 from movieBump import movieBump
+from dustpy.plot import panel
+from os import path, getcwd
+from matplotlib.ticker import ScalarFormatter
+from plottingFunctions import getDataDir, getTitle, getText, getRingStats, getRingMass
+from dustpy import hdf5writer as w
 
-# cd /mnt/beegfs/bachelor/scratch/miller/dustpy2/debris-discs/
 
 # Global settings
 M_earth = 5.9722e24 * 1e3  # [g]
 
-localDir = '/mnt/beegfs/bachelor/scratch/miller/dustpy2/debris-discs'
-localDir = '/media/elle/Seagate Backup Plus Drive/2020/mpia/debris-discs'
+slurmDir = '/mnt/beegfs/bachelor/scratch/miller/dustpy2/debris-discs'
+localDir = getcwd()
+localDirNew = '/media/elle/Seagate Expansion Drive/MPIAResults'
 
-colWidth = 244  # pt
-fontsize = 12
+colWidth = 240  # pt
+fontsize = 14
 labelsize = 14
 length = 3
 width = 0.5
 fig_width_pt = colWidth  # Get this from LaTeX using \showthe\columnwidth
-plt.rcParams.update({'font.size': fontsize})
-plt.rc('axes', labelsize=labelsize)
-plt.rc('xtick', labelsize=labelsize)
-plt.rc('ytick', labelsize=labelsize)
 
 
 def main(args):
+    plt.rcParams.update({'font.size': fontsize})
+    plt.style.use('seaborn-paper')
+    plt.rc('text', usetex=True)
+    plt.rc('xtick', labelsize=labelsize)
+    plt.rc('ytick', labelsize=labelsize)
+    plt.rc('axes', labelsize=fontsize)
+    plt.rcParams["legend.labelspacing"] = 0.3
+
+    # Read all data in the directory
     z = args.z
-    w.datadir = localDir + '/sims/' + str(z)
+    print("Sim #", z)
+    w.datadir = getDataDir(z)
     outputDir = localDir + '/simplots/'
 
-    if args.plotMovie:
-        # movie(outputDir, fps=100)
-        movieBump(z, outputDir + 'movies/sdr/', fps=100)
+    if args.plotSDMovie:
+        movieBump(z, w.datadir, outputDir + 'movies/sdr/', sd=True)
+        return
+    if args.plotDistMovie:
+        movieBump(z, outputDir + 'movies/sdr/', sd=False)
+        return
 
-    # Get basic data from files
+    # Time data
     t = w.read.sequence('t') / c.year
     Nt = t.shape[0]
     tMyr = t / 1e6
     tMyrEnd = tMyr[Nt - 1]
     print("tMyrEnd = ", tMyrEnd)
-    d2g = w.read.sequence('dust.eps')
-    rInt = w.read.sequence('grid.ri')  # Radial grid cell interfaces [cm]
+
+    # Mass data
     m = w.read.sequence('grid.m')  # Mass grid field [g]
     Nm = m.shape[1]  # Number of mass bins
     A = np.mean(m[:, 1:] / m[:, :-1], axis=1)[..., None, None]  # Grid constant
     dm = 2. * (A - 1.) / (A + 1.)  # mass bin width
+
+    # Radial data
     r = w.read.sequence('grid.r')  # Radial grid cell centers [cm]
     R = r / c.au  # Radial grid cell centers [AU]
     Nr = R.shape[1]
+    rInt = w.read.sequence('grid.ri')  # Radial grid cell interfaces [cm]
 
-    # Dust information
-    SigmaDust = w.read.sequence('dust.Sigma')
-    SigmaDustTot = np.sum(SigmaDust, axis=2)
-    DustDiskMass = np.sum(np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * SigmaDustTot[:, :], axis=1) / c.M_sun
-    DustDiskMassEarth = np.sum(np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * SigmaDustTot[:, :], axis=1) / M_earth
-    print("Initial dust disc mass (Earths): ", DustDiskMassEarth[0])
-    print("Final dust disc mass (Earths): ", DustDiskMassEarth[-1])
-
-    SigmaDustDist = SigmaDust / dm
-    particleSize = w.read.sequence('dust.a')  # Particle size field [cm]
-
-    # Gas information
-    SigmaGas = w.read.sequence('gas.Sigma')
-    SigmaGasTot = np.sum(SigmaGas, axis=-1)
-    GasDiskMass = np.sum(np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * SigmaGas[:, :], axis=1) / c.M_sun
-    GasDiskMassEarth = np.sum(np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * SigmaGas[:, :], axis=1) / M_earth
-    SigmaGasDist = SigmaGas / dm
+    # Misc data
+    alpha = w.read.sequence('gas.alpha')
+    d2g = w.read.sequence('dust.eps')
 
     # Planetesimal information
     SigmaPlan = w.read.sequence('planetesimals.Sigma')
@@ -82,92 +84,104 @@ def main(args):
     PlanDiskMassEarth = np.sum(np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * SigmaPlan[:, :], axis=1) / M_earth
     print("Mass of final planetesimal disc mass in Earth masses: %.10f" % PlanDiskMassEarth[-1])
 
-    # Create strings for plots
-    [alpha, amplitude, position] = getJobParams(z)
-    ptot = f"{PlanDiskMassEarth[Nt - 1]:.1f}"
-    textstr = "Plan Disc Mass: " + str(ptot) + " Earths"
-    titlestr = str(z) + ": " + r"$\alpha$" + "={a}, A={A}, $r_p$={p}AU @ {t:.2f} Myr".format(a=alpha, A=amplitude,
-                                                                                             p=position,
-                                                                                             t=tMyrEnd)
+    # Dust information
+    SigmaDust = w.read.sequence('dust.Sigma') # Nt x Nr x Nm
+    SigmaDustTot = np.sum(SigmaDust, axis=2)  # Nt x Nr
+    DustMass = (np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * SigmaDustTot[:, :])
+    DustDiskMass = np.sum(DustMass, axis=1) / c.M_sun
+    DustDiskMassEarth = np.sum(DustMass, axis=1) / M_earth
+    particleSize = w.read.sequence('dust.a')  # Particle size field [cm]
+    # print("Initial dust disc mass (Earths): ", DustDiskMassEarth[0])
+    print("Final dust disc mass (Earths): ", DustDiskMassEarth[-1])
+
+    # Loop through radial grid, setting to 0 on either side of bump
+    LeftDustTot = SigmaDustTot[-1].copy()
+    RightDustTot = SigmaDustTot[-1].copy()
+    iBumpPeakPos = np.argmax(DustMass[-1])
+    for i in range(Nr):
+        if i <= iBumpPeakPos:
+            RightDustTot[i] = 0
+        elif i > iBumpPeakPos:
+            LeftDustTot[i] = 0
+    leftDustDiskMass = np.sum(np.pi * (rInt[-1, 1:] ** 2. - rInt[-1, :-1] ** 2.) * LeftDustTot[:]) / M_earth
+    rightDustDiskMass = np.sum(np.pi * (rInt[-1, 1:] ** 2. - rInt[-1, :-1] ** 2.) * RightDustTot[:]) / M_earth
+    print("Dust left of bump (Earths): ", leftDustDiskMass)
+    print("Dust right of bump (Earths): ", rightDustDiskMass)
+    # fig, ax = plt.subplots()
+    # ax.plot(R[-1], DustMass[-1] / M_earth)
+    # ax.vlines(R[-1, iBumpPeakPos], 0, 0.1, 'r')
+    # plt.show()
+
+    # Gas information
+    SigmaGas = w.read.sequence('gas.Sigma')
+    SigmaGasTot = np.sum(SigmaGas, axis=-1)
+    GasDiskMass = np.sum(np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * SigmaGas[:, :], axis=1) / c.M_sun
+    GasDiskMassEarth = np.sum(np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * SigmaGas[:, :], axis=1) / M_earth
+    SigmaGasDist = SigmaGas / dm
+
+    center, width, frac, istart, iend = getRingStats(SigmaPlan[-1], w)
+    RingDiskMass = getRingMass(SigmaDustTot.copy()[-1], istart, iend, w)
+
+    textstr = getText(PlanDiskMassEarth[-1], center, width, frac)
+    titlestr = getTitle(z, w)
+
     # Plot the surface density of dust and gas vs the distance from the star
     if args.plotSDR:
         fig, ax = plt.subplots()
-        it = 0
-        ax.loglog(R[-1, ...], SigmaDustTot[-1, ...], label="Dust")
         ax.loglog(R[-1, ...], SigmaGas[-1, ...], label="Gas")
-        ax.loglog(R[-1, ...], SigmaPlan[-1, ...], label="Planetesimals")
-        ax.loglog(R[-1, ...], d2g[-1, ...], label="d2g Ratio")
+        ax.loglog(R[-1, ...], SigmaDustTot[-1, ...], label="Dust")
+        ax.loglog(R[-1, ...], SigmaPlan[-1, ...], label="Plan")
+        ax.loglog(R[-1, ...], d2g[-1, ...], ls='--', label="d2g")
         ax.set_ylim(1.e-6, 1.e4)
-        ax.set_xlabel("Distance from star [AU]")
-        ax.set_ylabel("Surface Density [g/cm²]")
-        ax.legend()
-        ax.set_title(titlestr)
-        ax.text(0.05, 0.9, textstr, transform=ax.transAxes, fontsize=10)
+        ax.set_xlim(12, 200)
+        ax.set_xlabel("Distance from star [au]")
+        ax.set_ylabel("Surface density [g/cm²]")
+        ax.legend(loc='upper right', fontsize=fontsize, frameon=True)
+        ax.set_title(titlestr, fontdict={'fontsize': fontsize})
+        ax.text(0.04, 0.83, textstr, transform=ax.transAxes, fontsize=fontsize)
+        ax.xaxis.set_minor_formatter(ScalarFormatter())
+        ax.xaxis.set_minor_formatter(("%.0f"))
+        for axis in [ax.xaxis]:
+            axis.set_major_formatter(ScalarFormatter())
+            ax.set_xticks([30, 60, 90, 120])
         fig.tight_layout()
         filename = outputDir + 'sdr/r' + str(args.z) + '.png'
-        plt.savefig(filename, format='png', dpi=600)
-        #plt.show()
+        plt.savefig(filename, format='png')
+        plt.show()
 
     # Time evolution of gas and dust disk mass
     if args.plotMass:
         fig02, ax02 = plt.subplots()
-        ax02.loglog(t, GasDiskMassEarth, label="Gas", color="C0")
-        ax02.loglog(t, DustDiskMassEarth, label="Dust", color="C4")
-        # if numRings == 2:
-        #     ax02.loglog(t, RingDiskMass * c.M_sun / M_earth, ls='--', label="Total Ring Dust", color="C1")
-        #     ax02.loglog(t, Ring1DiskMass * c.M_sun / M_earth, ls='-.', label="Ring 1 Dust", color="C3")
-        #     ax02.loglog(t, Ring2DiskMass * c.M_sun / M_earth, ls=':', label="Ring 2 Dust", color="C5")
-        # else:
-        #     ax02.loglog(t, RingDiskMass * c.M_sun / M_earth, ls='--', label="Ring Dust", color="C1")
-        ax02.loglog(t, PlanDiskMassEarth, label="Planetesimals", color="C2")
+        ax02.loglog(t, GasDiskMassEarth, label="Gas", color="C1")
+        ax02.loglog(t, DustDiskMassEarth, label="Dust", color="C0")
+        ax02.loglog(t, RingDiskMass * c.M_sun / M_earth, ls='--', label="Ring Dust", color="C4")
+        ax02.loglog(t, PlanDiskMassEarth, label="Planetesimals", color="C3")
         xlim0 = t[min(1, len(t) - 1)]
         xlim1 = t[-1]
         ax02.set_xlim(xlim0, xlim1)
-        # ylim0 = 10. ** np.floor(np.log10(np.min(np.minimum(GasDiskMass, DustDiskMass, PlanDiskMass))))
-        # ylim1 = 10. ** np.ceil(np.log10(np.max(np.maximum(GasDiskMass, DustDiskMass, PlanDiskMass))))
         ax02.set_ylim(1e0, 3e5)
         ax02.legend(loc='lower left')
         ax02.lineTime = ax02.axvline(t[0], color="C7", zorder=-1, lw=1)
+        titlestr = r"$\alpha$" + "={a}, A={A}, r$_p$={p}au".format(a=alpha0, A=amplitude, p=position)
         ax02.set_title(titlestr)
         ax02.set_xlabel("Time [yr]")
         ax02.set_ylabel("Mass [M$_\oplus$]")
         ax02.grid(b=False)
-        filename = outputDir + 'mass/m' + str(args.z) + '.png'
-        plt.savefig(filename, format='png', dpi=600)
-        #plt.show()
-
-
-def fwhm(x, y, k=10):
-    """
-     Determine full-width-half-maximum of a peaked set of points, x and y.
-
-     Assumes that there is only one peak present in the datasset.  The function
-     uses a spline interpolation of order k.
-     """
-    half_max = max(y) / 2
-    s = splrep(x, y - half_max, k=3)
-    roots = sproot(s)
-
-    if len(roots) > 2:
-        # raise MultiplePeaks("The dataset appears to have multiple peaks, and thus the FWHM can't be determined.")
-        return [0, 0]
-
-    elif len(roots) < 2:
-        # raise NoPeaksFound("No proper peaks were found in the data set; likely "the dataset is flat (e.g. all zeros).")
-        return [0, 0]
-
-    else:
-        return [roots[1], roots[0]]
+        filename = outputDir + 'mass/m' + str(args.z)
+        plt.savefig(filename + '.png', format='png', dpi=600)
+        plt.savefig(filename + '.eps', format='eps', dpi=600, bbox_inches="tight", pad_inches=0)
+        # plt.show()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-z', action="store", dest="z", type=int, default=1, help="Simulation number")
+    parser.add_argument('-g', action="store", dest="getRingStats", type=int, default=0, help="Calculate ring stuff")
     parser.add_argument('-a', action="store", dest="plotAll", type=int, default=0, help="Plot all")
     parser.add_argument('-m', action="store", dest="plotMass", type=int, default=0, help="Plot masses over time")
     parser.add_argument('-r', action="store", dest="plotSDR", type=int, default=0, help="Plot sigma over radius")
-    parser.add_argument('-f', action="store", dest="plotMovie", type=int, default=0, help="Plot a film of colour map")
-    parser.add_argument('-p', action="store", dest="plotPlan", type=int, default=0, help="Plot plan ring over time")
+    parser.add_argument('-s', action="store", dest="plotSDMovie", type=int, default=0, help="Plot a film of colour map")
+    parser.add_argument('-d', action="store", dest="plotDistMovie", type=int, default=0, help="Plot plan ring over time")
     arguments = parser.parse_args()
     main(arguments)
 
@@ -335,11 +349,11 @@ if __name__ == "__main__":
 #     #            print("pos = %f" % R[j,i])
 #     #            print("d2g = %f" % d2g[j,i])
 #     # Initialize
-#     ringWidth1 = np.zeros(Nt)
-#     startRing1 = np.zeros(Nt)
-#     endRing1 = np.zeros(Nt)
-#     centerRing1 = np.zeros(Nt)
-#     fracWidth1 = np.zeros(Nt)
+#     ringWidth = np.zeros(Nt)
+#     startRing = np.zeros(Nt)
+#     endRing = np.zeros(Nt)
+#     centerRing = np.zeros(Nt)
+#     fracWidth = np.zeros(Nt)
 #     ringWidth2 = np.zeros(Nt)
 #     startRing2 = np.zeros(Nt)
 #     endRing2 = np.zeros(Nt)
@@ -357,8 +371,8 @@ if __name__ == "__main__":
 #     for j in range(Nt):
 #
 #         # Reset index positions
-#         iStartRing1P = 0
-#         iEndRing1P = 0
+#         istartRingP = 0
+#         iendRingP = 0
 #         iStartRing2P = 0
 #         iEndRing2P = 0
 #         index = 0
@@ -370,14 +384,14 @@ if __name__ == "__main__":
 #         numRings = 0
 #         beginRing2 = False
 #         for i in SigmaPlan[j]:
-#             if (i > minVal) & (iStartRing1P == 0):
+#             if (i > minVal) & (istartRingP == 0):
 #                 if formed is False:
 #                     formationTimeIndex = j
 #                     formed = True
-#                 iStartRing1P = index
+#                 istartRingP = index
 #                 numRings = 1
-#             elif (beginRing2 == False) & (numRings == 1) & (i < floorVal) & (iStartRing1P != 0):
-#                 iEndRing1P = index
+#             elif (beginRing2 == False) & (numRings == 1) & (i < floorVal) & (istartRingP != 0):
+#                 iendRingP = index
 #                 beginRing2 = True
 #             elif beginRing2 & (i > minVal) & (iStartRing2P == 0):
 #                 iStartRing2P = index
@@ -387,23 +401,23 @@ if __name__ == "__main__":
 #                 break
 #             index += 1
 #
-#         startRing1[j] = 1e-10
-#         endRing1[j] = 1e-10
+#         startRing[j] = 1e-10
+#         endRing[j] = 1e-10
 #         startRing2[j] = 1e-10
 #         endRing2[j] = 1e-10
 #
 #         # Convert these indices to actual values
-#         if iStartRing1P != 0:
-#             startRing1[j] = rInt[j, iStartRing1P] / c.AU
-#             endRing1[j] = rInt[j, iEndRing1P] / c.AU
+#         if istartRingP != 0:
+#             startRing[j] = rInt[j, istartRingP] / c.AU
+#             endRing[j] = rInt[j, iendRingP] / c.AU
 #
 #         if iStartRing2P != 0:
 #             startRing2[j] = rInt[j, iStartRing2P] / c.AU
 #             endRing2[j] = rInt[j, iEndRing2P] / c.AU
 #
-#         centerRing1[j] = (endRing1[j] + startRing1[j]) / 2
-#         ringWidth1[j] = endRing1[j] - startRing1[j]
-#         fracWidth1[j] = ringWidth1[j] / centerRing1[j]
+#         centerRing[j] = (endRing[j] + startRing[j]) / 2
+#         ringWidth[j] = endRing[j] - startRing[j]
+#         fracWidth[j] = ringWidth[j] / centerRing[j]
 #         centerRing2[j] = (endRing2[j] + startRing2[j]) / 2
 #         ringWidth2[j] = endRing2[j] - startRing2[j]
 #         fracWidth2[j] = ringWidth2[j] / centerRing2[j]
@@ -420,8 +434,8 @@ if __name__ == "__main__":
 #
 #         # For this epoch, loop through all radial bins, and turn OFF dust outside ring indices
 #         # print(numRings)
-#         # print(iStartRing1P)
-#         # print(iEndRing1P)
+#         # print(istartRingP)
+#         # print(iendRingP)
 #         # print(iStartRing2P)
 #         # print(iEndRing2P)
 #         for k in range(Nr):
@@ -432,17 +446,17 @@ if __name__ == "__main__":
 #                 Ring2DustTot[j, :] = 0
 #                 break
 #             # If there is only one ring and we aint in it
-#             elif (numRings == 1) & ((k not in range(iStartRing1P, iEndRing1P + 1))):
+#             elif (numRings == 1) & ((k not in range(istartRingP, iendRingP + 1))):
 #                 RingDustTot[j, k] = 0
 #                 Ring1DustTot[j, k] = 0
 #                 Ring2DustTot[j, :] = 0
 #             # If there are two rings, and we are in first, middle or end section then set to zero
-#             elif (numRings == 2) & ((k < iStartRing1P) | (k in range(iEndRing1P + 1, iStartRing2P)) | (k > iEndRing2P)):
+#             elif (numRings == 2) & ((k < istartRingP) | (k in range(iendRingP + 1, iStartRing2P)) | (k > iEndRing2P)):
 #                 RingDustTot[j, k] = 0
 #                 Ring1DustTot[j, k] = 0
 #                 Ring2DustTot[j, k] = 0
 #             # If in first ring, set ring2 to zero
-#             elif (numRings == 2) & (k in range(iStartRing1P, iEndRing1P + 1)):
+#             elif (numRings == 2) & (k in range(istartRingP, iendRingP + 1)):
 #                 Ring2DustTot[j, k] = 0
 #             elif (numRings == 2) & (k in range(iStartRing2P, iEndRing2P + 1)):
 #                 Ring1DustTot[j, k] = 0
@@ -451,11 +465,11 @@ if __name__ == "__main__":
 #     Ring1DiskMass = np.sum(np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * Ring1DustTot[:, :], axis=1) / c.M_sun
 #     Ring2DiskMass = np.sum(np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * Ring2DustTot[:, :], axis=1) / c.M_sun
 #    # print("Time of first formation: %.2f" % tMyr[formationTimeIndex])
-#     print("Ring 1 Start: %.1f" % startRing1[-1])
-#     print("Ring 1 End: %.1f" % endRing1[-1])
-#     print("Ring 1 Center: %.1f AU" % centerRing1[Nt - 1])
-#     print("Ring 1 Width: %.1f AU" % ringWidth1[Nt - 1])
-#     print("Ring 1 Fractional Width: %.2f" % fracWidth1[Nt - 1])
+#     print("Ring 1 Start: %.1f" % startRing[-1])
+#     print("Ring 1 End: %.1f" % endRing[-1])
+#     print("Ring 1 Center: %.1f AU" % centerRing[Nt - 1])
+#     print("Ring 1 Width: %.1f AU" % ringWidth[Nt - 1])
+#     print("Ring 1 Fractional Width: %.2f" % fracWidth[Nt - 1])
 #     print("******")
 #     for i in range(Nt-1):
 #         print("Time = %.2f" % tMyr[i])
@@ -466,15 +480,15 @@ if __name__ == "__main__":
 #         print("Ring 2 Width: %.1f AU" % ringWidth2[Nt - 1])
 #         print("Ring 2 Fractional Width: %.2f" % fracWidth2[Nt - 1])
 #
-#     c1 = f"{centerRing1[Nt - 1]:.1f}"
-#     w1 = f"{ringWidth1[Nt - 1]:.1f}"
-#     f1 = f"{fracWidth1[Nt - 1]:.2f}"
+#     c1 = f"{centerRing[Nt - 1]:.1f}"
+#     w1 = f"{ringWidth[Nt - 1]:.1f}"
+#     f1 = f"{fracWidth[Nt - 1]:.2f}"
 #     c2 = f"{centerRing2[Nt - 1]:.0f}"
 #     w2 = f"{ringWidth2[Nt - 1]:.0f}"
 #     f2 = f"{fracWidth2[Nt - 1]:.2f}"
 #     ptot = f"{PlanDiskMassEarth[Nt - 1]:.1f}"
 #
-#     if ringWidth1[Nt - 1] == 0:
+#     if ringWidth[Nt - 1] == 0:
 #         textstr = ""
 #     elif ringWidth2[Nt - 1] == 0:
 #         textstr = "1: c=" + c1 + " w=" + w1 + " AU, f=" + f1

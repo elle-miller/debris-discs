@@ -1,13 +1,13 @@
 #!/bin/bash -l
 
 # Bash script to run the mpi script multiple times for varying parameters
-# Date: Feb 16 - create a wide belt based on 208
+# Date: Feb 19 - tripling amplitude to force dem out
 
-startingDir=232
+startingDir=235
 startyear=5
 velocity=1
 alpha=3
-amplitude=10
+amplitude=30
 
 # Case 1
 position=120

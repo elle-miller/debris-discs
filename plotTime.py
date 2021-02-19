@@ -14,6 +14,7 @@ from scipy.interpolate import splrep, sproot, splev
 from matplotlib.ticker import ScalarFormatter, StrMethodFormatter, NullFormatter, MultipleLocator, FormatStrFormatter, \
     AutoMinorLocator
 import matplotlib.ticker as ticker
+from plottingFunctions import *
 
 
 M_earth = 5.9722e24 * 1e3  # [g]
@@ -22,8 +23,10 @@ localDir = '/media/elle/Seagate Backup Plus Drive/2020/mpia/debris-discs'
 
 
 def main(args):
+    # Read all data in the directory
     z = args.z
-    w.datadir = localDir + '/sims/' + str(z)
+    print("Sim #", z)
+    w.datadir = getDataDir(z)
     outputDir = localDir + '/simplots/'
 
     # Get basic data from files

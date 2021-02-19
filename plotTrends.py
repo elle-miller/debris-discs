@@ -90,16 +90,16 @@ if plot34:
     fig, ax1 = plt.subplots()
 
     # Data
-    center = 3
+    center = 1
     n = 3
 
     if center == 1:
         ax1.set_ylabel("Ring width [au]", fontsize=fontsize)
         loc = 'upper left'
         figname = 'width34'
-        lns3 = ax1.semilogx(velocity[0:n], widthList310[0:n], markersize=markersize, marker='^', ls='--', color="C2",
+        lns3 = ax1.semilogx(velocity[0:n], widthList310[0:n], markersize=markersize, marker='^', ls='--', color="lightcoral",
                             label=r"$\alpha$ = 1e-3")
-        lns4 = ax1.semilogx(velocity[0:n], widthList410[0:n], markersize=markersize, marker='*', ls='--', color="C3",
+        lns4 = ax1.semilogx(velocity[0:n], widthList410[0:n], markersize=markersize, marker='*', ls='--', color="cornflowerblue",
                             label=r"$\alpha$ = 1e-4")
         lns = lns3 + lns4
     if center == 2:
