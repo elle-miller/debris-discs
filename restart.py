@@ -10,7 +10,6 @@ localDirNew = '/media/elle/Seagate Expansion Drive/MPIAResults'
 
 
 def main(args):
-
     z = args.z
     if path.exists(localDir + '/sims/' + str(z)):
         dataDir = localDir + '/sims/' + str(z)
@@ -21,15 +20,17 @@ def main(args):
     else:
         print("Output directory not found")
         return
-        
+
     s = readdump(dataDir + '/frame.dmp')
 
     s.addgroup("bump", description="Bump quantities")
     s.bump.addfield("A", args.amplitude)
     s.bump.addfield("width", args.width)
-    s.bump.addfield("pos", args.iniBumpPeakPos)
-    s.bump.addfield("v", args.bumpVelFactor)
+    s.bump.addfield("iniPeakPos", args.iniBumpPeakPos * c.au)
+    s.bump.addfield("currentPeakPos", args.iniBumpPeakPos * c.au)
+    s.bump.addfield("f", args.bumpVelFactor)
     s.bump.addfield("invert", args.invertBump)
+    s.bump.addfield("timeStartMoving", 0)
     s.run()
 
 
@@ -40,6 +41,6 @@ if __name__ == "__main__":
     parser.add_argument('-w', action="store", dest="width", type=float, default=1., help="width factor")
     parser.add_argument('-v', action="store", dest="bumpVelFactor", type=float, default=0, help="% of nominal")
     parser.add_argument('-p', action="store", dest="iniBumpPeakPos", type=int, default=90, help="Starting center (AU)")
-    parser.add_argument('-i', action="store", dest="invertBump", type=int, default="0", help="Invert the gauss bump")
+    parser.add_argument('-i', action="store", dest="invertBump", type=int, default="1", help="Invert the gauss bump")
     arguments = parser.parse_args()
     main(arguments)

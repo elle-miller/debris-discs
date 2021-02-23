@@ -1,19 +1,41 @@
 #!/bin/bash -l
 
 # Bash script to run the mpi script multiple times for varying parameters
-# Date: Feb 17 rerun 189/208 with lots more Nt
+# Date: Feb 23 double of 190/210 for completeness
 
-startingDir=235
-n=300
+# 190 double
+startingDir=240
+n=31
 radialRes=200
 alpha=3
-amplitude=10
-position=90
+amplitude=30
+position=30
 velocity=0
-for v in 0 1; do
-  sbatch job.sh $startingDir $alpha $amplitude $velocity $position $n $radialRes
-  ((startingDir+=1))
-done
+sbatch job.sh $startingDir $alpha $amplitude $velocity $position $n $radialRes
+
+# 210 double
+startingDir=241
+n=31
+radialRes=200
+alpha=4
+amplitude=3
+position=90
+velocity=0.1
+sbatch job.sh $startingDir $alpha $amplitude $velocity $position $n $radialRes
+
+
+
+#startingDir=235
+#n=300
+#radialRes=200
+#alpha=3
+#amplitude=10
+#position=90
+#velocity=0
+#for v in 0 1; do
+#  sbatch job.sh $startingDir $alpha $amplitude $velocity $position $n $radialRes
+#  ((startingDir+=1))
+#done
 
 #for amplitude in 10 30; do
 #  for position in 30 60 90; do
