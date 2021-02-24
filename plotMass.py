@@ -60,9 +60,23 @@ def main(args):
     # Text plotting
     RingDustTot = SigmaDustTot.copy()
     RingDiskMass = np.zeros(Nt)
+    [alpha0, amplitude, position] = getJobParams(z)
+
+    # Starting guess
+    iguess = np.argmin(abs(R-position))
     for i in range(Nt):
-        center, width, frac, istart, iend = getRingStats(SigmaPlan[i], w)
-        RingDiskMass[i] = getRingMass(RingDustTot[i], istart, iend, w)
+        # Find igap
+        igap = np.argmin(SigmaGas[i, 0:iguess+10])
+        iguess = igap
+        ipeak = np.argmax(SigmaDustTot[i, igap:igap + 35]) + igap
+        dist = ipeak - igap
+        istart = int(ipeak - 0.5 * dist)
+        iend = int(ipeak + 0.5 * dist)
+        center, width, frac, istart2, iend2 = getRingStats(SigmaPlan[i], w)
+        if ipeak != igap:
+            RingDiskMass[i] = getRingMass(RingDustTot[i], istart, iend, w)
+        print(t[i] * 1e-6, igap, iend, RingDiskMass[i])
+
     textstr = getText(PlanDiskMassEarth[-1], center, width, frac)
     titlestr = getTitle(z, w)
 
@@ -72,7 +86,7 @@ def main(args):
     ax.loglog(t, RingDiskMass, ls='--', label="Ring Dust", color="C4")
     ax.loglog(t, PlanDiskMassEarth, label="Planetesimals", color="C2")
     ax.set_xlim(1e4, 1e7)
-    ax.set_ylim(1e-1, 1e7)
+    ax.set_ylim(1e0, 1e6)
     ax.legend(loc='upper right')
     ax.lineTime = ax.axvline(t[0], color="C7", zorder=-1, lw=1)
     filename = outputDir + 'mass/m' + str(z)

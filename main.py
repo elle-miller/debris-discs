@@ -194,9 +194,11 @@ def setSimulationParams(s, args):
     print('snapshots=', s.t.snapshots / c.year * 1e-6)
 
     # Update the mixing params to match alpha (these used to be in "ini")
-    s.dust.deltaRad = args.alpha  # radial particle diffusion
-    s.dust.deltaTurb = args.alpha  # relative velocitiy turbulence
-    s.dust.deltaVert = args.alpha  # vertical diffusion
+
+    s.dust.deltaTurb = args.deltaTFactor * args.alpha  # relative velocitiy turbulence
+    s.dust.deltaRad = args.deltaRZFactor * args.alpha  # radial particle diffusion
+    s.dust.deltaVert = args.deltaRZFactor * args.alpha  # vertical diffusion
+    print("deltaRad/Vert = ", s.dust.deltaVert, ", deltaTurb = ", s.dust.deltaTurb)
 
     # Make the simulation shorter and smaller if not evolving gas or dust
     if not args.gasEvolution:
@@ -241,6 +243,8 @@ if __name__ == "__main__":
     parser.add_argument('-v', action="store", dest="bumpVelFactor", type=float, default=0, help="% of nominal")
     parser.add_argument('-p', action="store", dest="iniBumpPeakPos", type=int, default=90, help="Starting center (AU)")
     parser.add_argument('-f', action="store", dest="vfrag", type=int, default=1000, help="Fragmentation velocity (cm/s)")
+    parser.add_argument('-d', action="store", dest="deltaTFactor", type=float, default=1.0, help="deltaT")
+    parser.add_argument('-D', action="store", dest="deltaRZFactor", type=float, default=1.0, help="deltaRZ")
     parser.add_argument('-1', action="store", dest="gasEvolution", type=int, default=1, help="Create bump via alpha")
     parser.add_argument('-2', action="store", dest="dustEvolution", type=int, default=1, help="Advect/diffus transport")
     parser.add_argument('-3', action="store", dest="panel", type=int, default=0, help="Plot panel output")

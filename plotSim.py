@@ -95,22 +95,25 @@ def main(args):
     print("Final dust disc mass (Earths): ", DustDiskMassEarth[-1])
 
     # Loop through radial grid, setting to 0 on either side of bump
-    LeftDustTot = SigmaDustTot[-1].copy()
-    RightDustTot = SigmaDustTot[-1].copy()
-    iBumpPeakPos = np.argmax(DustMass[-1])
+    it = 0
+    LeftDustTot = SigmaDustTot[it].copy()
+    RightDustTot = SigmaDustTot[it].copy()
+    [alpha0, amplitude, position] = getJobParams(z)
+    iBumpPeakPos = (np.abs(R - position)).argmin()
     for i in range(Nr):
         if i <= iBumpPeakPos:
             RightDustTot[i] = 0
         elif i > iBumpPeakPos:
             LeftDustTot[i] = 0
-    leftDustDiskMass = np.sum(np.pi * (rInt[-1, 1:] ** 2. - rInt[-1, :-1] ** 2.) * LeftDustTot[:]) / M_earth
-    rightDustDiskMass = np.sum(np.pi * (rInt[-1, 1:] ** 2. - rInt[-1, :-1] ** 2.) * RightDustTot[:]) / M_earth
+    leftDustDiskMass = np.sum(np.pi * (rInt[it, 1:] ** 2. - rInt[it, :-1] ** 2.) * LeftDustTot[:]) / M_earth
+    rightDustDiskMass = np.sum(np.pi * (rInt[it, 1:] ** 2. - rInt[it, :-1] ** 2.) * RightDustTot[:]) / M_earth
     print("Dust left of bump (Earths): ", leftDustDiskMass)
     print("Dust right of bump (Earths): ", rightDustDiskMass)
-    # fig, ax = plt.subplots()
-    # ax.plot(R[-1], DustMass[-1] / M_earth)
-    # ax.vlines(R[-1, iBumpPeakPos], 0, 0.1, 'r')
-    # plt.show()
+    fig, ax = plt.subplots()
+    ax.loglog(R[it], DustMass[it] / M_earth)
+    ax.vlines(R[it, iBumpPeakPos], 0, np.max(DustMass[it]) / M_earth, 'r')
+    plt.show()
+    return
 
     # Gas information
     SigmaGas = w.read.sequence('gas.Sigma')

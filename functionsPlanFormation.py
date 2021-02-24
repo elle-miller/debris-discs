@@ -18,6 +18,12 @@ def S_ext(s):
     # Midplane dust-to-gas ratio
     d2g_mid = s.dust.rho.sum(-1) / s.gas.rho
 
+    # Old step function way
+    # d2g_crit = 1.0
+    # mask = np.where(d2g_mid >= d2g_crit, True, False)
+    # ret = np.where(mask[:, None], -zeta * s.dust.Sigma * s.dust.St * s.grid.OmegaK[:, None], 0.)
+
+    # New hyperbolic tangent way
     switch = 0.5 * (1. + np.tanh((np.log10(d2g_mid)) / 0.03))
     ret = -zeta * s.dust.Sigma * s.dust.St * s.grid.OmegaK[:, None] * switch[:, None]
 

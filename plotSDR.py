@@ -43,6 +43,8 @@ def main(args):
 
     # Data
     R = w.read.sequence('grid.r') / c.au  # Radial grid cell centers [cm]
+    Nr = R.shape[1]
+    rInt = w.read.sequence('grid.ri')  # Radial grid cell interfaces [cm]
     SigmaGas = w.read.sequence('gas.Sigma')
     SigmaGasTot = np.sum(SigmaGas, axis=-1)
     SigmaDust = w.read.sequence('dust.Sigma')  # Nt x Nr x Nm

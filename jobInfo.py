@@ -1,5 +1,28 @@
 def getJobParams(outputDir):
 
+    # wide
+    if outputDir == 232:
+        return [1e-3, 10, 90]
+    elif outputDir == 233 or outputDir == 234:
+        return [1e-3, 10, 120]
+
+    # vfrag
+    alphaL = [1e-4]
+    amplitudeL = [10, 30]
+    posL = [30, 60, 90]
+    startingDir = 220
+    for i in alphaL:
+        for j in amplitudeL:
+            for k in posL:
+                for vfrag in amplitudeL:
+                    if startingDir == outputDir:
+                        alpha = i
+                        amplitude = j
+                        pos = k
+                        return [alpha, amplitude, pos]
+                    else:
+                        startingDir += 1
+
     # Feb14 High res moving scripts
     alphaL = [1e-3, 1e-4]
     amplitudeL = [3, 10]

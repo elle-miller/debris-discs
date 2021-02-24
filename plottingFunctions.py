@@ -60,14 +60,14 @@ def getTitle(z, writer):
     return titlestr
 
 
-def getText(p, c1, w1, f1):
+def getText(p, c1, w1, f1, justMass=False):
     ptot = f"{p:.0f}"
-    textstr = r"$\mathcal{M}$: " + str(ptot) + r" M$_{\oplus}$" + "\n"
+    textstr = r"$\mathcal{M}$: " + str(ptot) + r" M$_{\oplus}$"
     center = f"{c1:.0f}"
     width = f"{w1:.0f}"
     frac = f"{f1:.1f}"
-    if w1 > 0.05:
-        textstr += "c: " + center + " au, w: " + width + " au, f: " + frac
+    if w1 > 0.05 and not justMass:
+        textstr += ", c: " + center + " au, w: " + width + " au, f: " + frac
     return textstr
 
 

@@ -28,12 +28,12 @@ done
 # invert gas bump
 # p = 50, 100
 # A = 3, 10, 30
-invert=1
-for alpha in 3 4; do
-  for amplitude in 3 30; do
-    for position in 50 100; do
-      sbatch job.sh $startingDir $alpha $amplitude $velocity $position $n $planOn $invert
-      ((startingDir+=1))
-    done
-  done
-done
+#invert=1
+#for alpha in 3 4; do
+#  for amplitude in 3 30; do
+#    for position in 50 100; do
+#      sbatch job.sh $startingDir $alpha $amplitude $velocity $position $n $planOn $invert
+#      ((startingDir+=1))
+#    done
+#  done
+#done

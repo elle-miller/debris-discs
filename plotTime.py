@@ -88,7 +88,18 @@ def main(args):
     axs = axs.ravel()
 
     j = 0
+    [alpha0, amplitude, position] = getJobParams(z)
+    iguess = np.argmin(abs(R - position))
     for i in epochs:
+
+        igap = np.argmin(SigmaGas[i, 0:iguess + 10])
+        iguess = igap
+        ipeak = np.argmax(SigmaDustTot[i, igap:igap + 35]) + igap
+        dist = ipeak - igap
+        istart = int(ipeak - 0.5 * dist)
+        iend = int(ipeak + 0.5 * dist)
+        axs[j].vlines(R[i, istart], 1e-4, 1e4, 'r')
+        axs[j].vlines(R[i, iend], 1e-4, 1e4, 'r')
         axs[j].loglog(R[i, ...], SigmaDustTot[i, ...], label="Dust")
         axs[j].loglog(R[i, ...], SigmaGas[i, ...], label="Gas")
         axs[j].loglog(R[i, ...], SigmaPlan[i, ...], label="Plan")
