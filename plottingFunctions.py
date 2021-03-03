@@ -27,18 +27,25 @@ def getTitle(z, writer):
     tMyrEnd = writer.read.sequence('t')[-1] / c.year * 1e-6
 
     # Wide scripts
-    if z == 233:
-        return r"$\alpha$: {a}, A: {A}, r$_p$: {p} au, f: 100\% at {t:.1f} Myr [{z}]".format(a=alpha0, A=amplitude, p=position,
-                                                                                  t=tMyrEnd, z=str(z))
-    elif z == 232 or z == 234:
-        return r"$\alpha$: {a}, A: {A}, r$_p$: {p} au, f: 100\% after 1Myr, at {t:.1f} Myr [{z}]".format(a=alpha0, A=amplitude, p=position,
-                                                                                  t=tMyrEnd, z=str(z))
+    if z == 233 or z == 236:
+        return r"$\alpha$: {a}, A: {A}, r$_p$: {p} au, f: 100\% at {t:.1f} Myr [{z}]".format(a=alpha0, A=amplitude,
+                                                                                             p=position,
+                                                                                             t=tMyrEnd, z=str(z))
+    elif z == 232 or z == 234 or z == 235 or z == 237:
+        return r"$\alpha$: {a}, A: {A}, r$_p$: {p} au, f: 100\% after 1Myr, at {t:.1f} Myr [{z}]".format(a=alpha0,
+                                                                                                         A=amplitude,
+                                                                                                         p=position,
+                                                                                                         t=tMyrEnd,
+                                                                                                         z=str(z))
 
     # Fragmentation scripts
     if 220 <= z <= 231:
         if np.mod(z, 2) == 0:
-            titlestr = r"v$_f$: 1 m/s, $\alpha$: {a}, A: {A}, r$_p$: {p} au at {t:.1f} Myr [{z}]".format(a=alpha0, A=amplitude,
-                                                                                       p=position, t=tMyrEnd, z=str(z))
+            titlestr = r"v$_f$: 1 m/s, $\alpha$: {a}, A: {A}, r$_p$: {p} au at {t:.1f} Myr [{z}]".format(a=alpha0,
+                                                                                                         A=amplitude,
+                                                                                                         p=position,
+                                                                                                         t=tMyrEnd,
+                                                                                                         z=str(z))
         else:
             titlestr = r"v$_f$: 3 m/s, $\alpha$: {a}, A: {A}, r$_p$: {p} au at {t:.1f} Myr [{z}]".format(a=alpha0,
                                                                                                          A=amplitude,
@@ -60,14 +67,21 @@ def getTitle(z, writer):
     return titlestr
 
 
-def getText(p, c1, w1, f1, justMass=False):
+def getText(p, c1, w1, f1, justMass=False, initialExtDust=None):
     ptot = f"{p:.0f}"
-    textstr = r"$\mathcal{M}$: " + str(ptot) + r" M$_{\oplus}$"
+    textstr = r"$\mathcal{M}$ = " + str(ptot) + r" M$_{\oplus}$"
+    #textstr = r"$\mathcal{M}$: " + str(ptot) + r" M$_{\oplus}$"
     center = f"{c1:.0f}"
     width = f"{w1:.0f}"
     frac = f"{f1:.1f}"
     if w1 > 0.05 and not justMass:
-        textstr += ", c: " + center + " au, w: " + width + " au, f: " + frac
+        #textstr += r", $\Delta r$ = " + width + r" au, $r$ = " + center + r" au, $\Delta r/r$ = " + frac
+        textstr += r", $\Delta r$ = " + width + r" au, $\Delta r/r$ = " + frac
+        #textstr += r", $\Delta r$: " + width + r" au, $r$: " + center + r" au, $\Delta r/r$: " + frac
+    if initialExtDust is not None:
+        data = float(p/initialExtDust) * 100
+        converted = f"{data:.0f}"
+        textstr += r" $({per}\%)$".format(per=converted)
     return textstr
 
 
@@ -83,11 +97,15 @@ def getRingStats(SigmaPlan, writer, verbose=False):
     index = 0
     minVal = 1e-3
 
+    maxPlan = np.max(SigmaPlan)
+    thresholdPlan = 0.001 * maxPlan
+
+
     # Loop through each radial bin, locating index positions of start and end ring
     for k in SigmaPlan:
-        if (k > minVal) & (istartRingP == 0):
+        if (k > thresholdPlan) & (istartRingP == 0):
             istartRingP = index
-        elif (k < minVal) & (istartRingP != 0):
+        elif (k < thresholdPlan) & (istartRingP != 0):
             iendRingP = index
             break
         index += 1
@@ -130,6 +148,7 @@ def getRingMass(RingDustTot, istartRingP, iendRingP, writer):
     RingDiscMass = np.sum(np.pi * (rInt[-1, 1:] ** 2. - rInt[-1, :-1] ** 2.) * RingDustTot[:], axis=0) / M_earth
     return RingDiscMass
 
+
 def getEPS(filename):
     dict = {
         "filename": filename + ".eps",
@@ -139,6 +158,7 @@ def getEPS(filename):
         "pad": 0.1
     }
     return dict
+
 
 def getPNG(filename):
     dict = {

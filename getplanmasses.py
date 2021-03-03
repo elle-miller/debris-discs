@@ -7,6 +7,7 @@ import numpy as np
 import argparse
 import matplotlib.pyplot as plt
 import os, os.path
+from plottingFunctions import *
 
 # cd /mnt/beegfs/bachelor/scratch/miller/dustpy2/debris-discs/
 
@@ -21,9 +22,24 @@ outputDir = localDir + '/plandata/'
 
 def main(args):
     z = args.z
-    w.datadir = localDir + '/sims/' + str(z)
+    w.datadir = getDataDir(z)
+    t = w.read.sequence('t') / (c.year * 1e6)
+    Nt = t.shape[0]
     num = len(w.read.listfiles())
     [alpha, amplitude, position] = getJobParams(z)
+
+    planmass = w.read.sequence('planetesimals.M') / M_earth
+    firstcutoff = 0.9*planmass[-1]
+    cutoffmass = 0.95*planmass[-1]
+    print("Final plan mass = ", planmass[-1], " Earths")
+    first = False
+    for it in range(Nt):
+        if planmass[it] >= firstcutoff and not first:
+            print("Time at 0.90M = ", t[it], " Myrs")
+            first = True
+        if planmass[it] >= cutoffmass:
+            print("Time at 0.95M  = ", t[it], " Myrs")
+            break
 
     # If we want to add it to masterPlanInfo.txt, only need the final output
     if args.writeToAll:
@@ -54,7 +70,7 @@ def main(args):
         append_new_line(filename, str(z) + "  " + "{a:6}  {A:2}  {p:3}".format(a=alpha, A=amplitude, p=position))
         append_new_line(filename, 't[Myr] planMass[Earths]')
         for n in range(num):
-            text = "{t:4.2f}  {pm:6.2f}".format(t=t[n], pm=pm[n])
+            text = "{t:4.2f}  {pm:15.10f}".format(t=t[n], pm=pm[n])
             append_new_line(filename, text)
 
 

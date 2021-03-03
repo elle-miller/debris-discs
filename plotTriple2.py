@@ -25,20 +25,18 @@ golden_ratio = 3/4
 height_inches = golden_ratio * width_inches
 fontsize = 14
 
-# Read all data in the directory
-fig, ax = plt.subplots(3, 1, sharex=True, sharey=True, figsize=(width_inches, 3.5*height_inches))
-fontsize = 14
-
 # Overlay seaborn's styling with personal adjustments
 plt.style.use('seaborn-paper')
 plt.style.use('tex')
 plt.rcParams["figure.figsize"] = width_inches, height_inches
+# Read all data in the directory
+fig, ax = plt.subplots(3, 1, sharex=True, sharey=True, figsize=(width_inches, 2.5*height_inches))
 
 plot3 = True
 if plot3:
-    firstendring = 115
+    firstendring = 116
     dir = [206, 207, 208]
-    filename = localDir + '/figplots/movingcompare3'
+    filename = localDir + '/figplots/movingcompare3new'
 else:
     firstendring = 117
     dir = [214, 215, 216]
@@ -65,27 +63,34 @@ for z in dir:
     # Text plotting
     [alpha0, amplitude, position] = getJobParams(z)
     center, width, frac, istart, iend = getRingStats(SigmaPlan[-1], w)
-    textstr = getText(PlanMass[-1], center, width, frac)
-    titlestr = "f = {p}%".format(p=position)
+    textstr = getText(PlanMass[-1], center, width, frac, justMass=True)
+    titlestr = r'$f = {p}\%$'.format(p=position)
 
     # Plot the surface density of dust and gas vs the distance from the star
     ax[i].loglog(R[-1, ...], SigmaGas[-1, ...], label="Gas")
     ax[i].loglog(R[-1, ...], SigmaDustTot[-1, ...], label="Dust")
     ax[i].loglog(R[-1, ...], SigmaPlan[-1, ...], label="Plan")
     ax[i].loglog(R[-1, ...], d2g[-1, ...], ls='--', label="d2g")
-    ax[i].set_ylim(1.e-6, 1.e4)
-    ax[i].set_xlim(12, 200)
+    ymax = 1e3
+    ymin = 1e-5
+    ax[i].set_ylim(ymin, ymax)
+    ax[i].set_xlim(12, 130)
     ax[i].set_title(titlestr, fontdict={'fontsize': fontsize, 'font': 'serif'})
     ax[i].text(0.04, 0.88, textstr, transform=ax[i].transAxes)
-    ax[i].xaxis.set_major_formatter(ScalarFormatter())
-    ax[i].vlines(firstendring, 1.e-6, 1e4, 'r')
+    ax[i].vlines(firstendring, ymin, ymax, 'tab:gray', linewidth=0.9, ls='--')
+    # ax[i].xaxis.set_minor_formatter(ScalarFormatter())
+    ax[i].xaxis.set_minor_formatter(("%.0f"))
+    for axis in [ax[i].xaxis]:
+        axis.set_major_formatter(ScalarFormatter())
+        ax[i].set_xticks([30, 60, 90, 120])
     i = i + 1
 
+fig.tight_layout()
 fig.text(0.5, 0.01, 'Distance from star [au]', ha='center', va='center', fontsize=fontsize)
 fig.text(0.02, 0.5, 'Surface density [g/cm²]', ha='center', va='center', rotation='vertical', fontsize=fontsize)
-fig.tight_layout()
+
 e = getEPS(filename)
 p = getPNG(filename)
-plt.savefig(p["filename"], dpi=300, bbox_inches=p["bbox"], pad_inches=p["pad"])
-plt.savefig(e["filename"], dpi=300, bbox_inches=e["bbox"], pad_inches=e["pad"])
+plt.savefig(p["filename"], dpi=300, bbox_inches=p["bbox"], pad_inches=0.03)
+#plt.savefig(e["filename"], dpi=300, bbox_inches=e["bbox"], pad_inches=e["pad"])
 plt.show()

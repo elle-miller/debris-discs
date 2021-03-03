@@ -32,31 +32,29 @@ phi = 0.05
 B = (1.5 * k * T)/(mu * mp) * (R * np.sqrt(phi)/(G * M))**0.5
 print("B=", B, " m/s")
 print("or ", (B / au) * (1e6 * c.year), "au/Myr")
+B = B / au * c.year
 
 # Bump params
-r_i = au * 90
 alpha0 = 1e-3
 
-time = 10e6 * c.year
-f = np.linspace(0, 3, 1000)
-alphas = [1e-3, 3e-4, 1e-4]
-linetype = ['--', '-.', '-']
-i = 0
+time = np.linspace(0, 10e6, 1000)
+# f = np.linspace(0, 3, 1000)
+f = 1
 a = 1e-3
-ax.plot(f,  (r_i - a * B * time * f)/au, '--', label=r"$\alpha = 10^{-3}$")
-a = 3e-4
-ax.plot(f,  (r_i - a * B * time * f)/au, '-.', label=r"$\alpha = 3 \times 10^{-4}$")
+ax.plot(time/1e6,  (a * B * time * f), '-', label=r"$\alpha = 10^{-3}$")
+# a = 3e-4
+# ax.plot(f,  (r_i - a * B * time * f)/au, '-.', label=r"$\alpha = 3 \times 10^{-4}$")
 a = 1e-4
-ax.plot(f,  (r_i - a * B * time * f)/au, '-', label=r"$\alpha = 10^{-4}$")
+ax.plot(time/1e6,  (a * B * time * f), '--', label=r"$\alpha = 10^{-4}$")
 
 # ax.set_title("Final bump distance after 10Myr, " + r"$\alpha$ = " + str(alpha0))
-ax.set_xlabel("Velocity factor $f$")
-ax.set_ylabel("Final distance [au]")
+ax.set_xlabel("Time [Myr]")
+ax.set_ylabel("Distance travelled [au]")
 ax.grid(b=True)
 # ax.plot(np.ones_like(f), np.linspace(0, r_i, 1000), 'r')
-ax.set_ylim(0, r_i/au)
-ax.set_xlim(0, 1)
-filename = localDir + '/figplots/final_pos2'
+ax.set_ylim(0, 100)
+ax.set_xlim(0, 10)
+filename = localDir + '/figplots/width_vs_time'
 ax.legend()
 plt.savefig(filename+'.png', format='png', bbox_inches='tight', pad_inches=0.05, dpi=300)
 plt.savefig(filename+'.eps', format='eps', bbox_inches='tight', pad_inches=0.05, dpi=300)

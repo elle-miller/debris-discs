@@ -43,6 +43,7 @@ def main(args):
 
     # Data
     t = w.read.sequence('t') / c.year
+    Nt = t.shape[0]
     R = w.read.sequence('grid.r') / c.au  # Radial grid cell centers [cm]
     Nr = R.shape[1]
     rInt = w.read.sequence('grid.ri')  # Radial grid cell interfaces [cm]
@@ -54,47 +55,52 @@ def main(args):
     SigmaPlan = w.read.sequence('planetesimals.Sigma')
     SigmaPlanTot = np.sum(SigmaPlan, axis=-1)
     PlanMass = w.read.sequence('planetesimals.M') / M_earth
+    rho_gas = w.read.sequence('gas.rho')
+    rho_dust = w.read.sequence('dust.rho').sum(-1)
+    d2g_mid = rho_dust / rho_gas
 
     # Text plotting
-    filename = outputDir + 'sdr/r' + str(z)
+    filename = outputDir + 'd2g/d2g' + str(z)
     center, width, frac, istart, iend = getRingStats(SigmaPlan[-1], w)
-    print("Width = ", width, ", center = ", center, ", Frac = ", frac)
-    textstr = getText(PlanMass[-1], center, width, frac)
+    # print("Width = ", width, ", center = ", center, ", Frac = ", frac)
+    textstr = getText(PlanMass[-1], center, width, frac, justMass=True)
     titlestr = getTitle(z, w)
 
-    # Plot the surface density of dust and gas vs the distance from the star
     fig, ax = plt.subplots()
-    ax.loglog(R[-1, ...], SigmaGas[-1, ...], label="Gas")
-    ax.loglog(R[-1, ...], SigmaDustTot[-1, ...], label="Dust")
-    ax.loglog(R[-1, ...], SigmaPlan[-1, ...], label="Plan")
-    ax.loglog(R[-1, ...], d2g[-1, ...], ls='--', label="d2g")
-    ax.hlines(0.001*np.max(SigmaPlan[-1]), 1e-10, 1e4)
-    ax.hlines(0.01 * np.max(SigmaPlan[-1]), 1e-10, 1e4)
-    ax.set_ylim(1.e-6, 1.e4)
-    xmin = 12
-    xmax = 200
-    ax.set_xlim(xmin, xmax)
-    ax.set_xlabel("Distance from star [au]")
-    ax.set_ylabel("Surface density [g/cm²]")
+    d2g_mid_at_peak = np.zeros(Nt)
+    r_peak = np.zeros(Nt)
+    # Starting guess
+    if z <= 201:
+        [alpha0, amplitude, position] = getJobParams(z)
+    else:
+        position = 90
+    iguess = np.argmin(abs(R[-1] - position))
+    for it in range(Nt):
+        igap = np.argmin(SigmaGas[it, 0:iguess + 10])
+        iguess = igap
+        ipeak = np.argmax(SigmaDustTot[it, igap:igap + 35]) + igap
+        r_peak[it] = R[it, ipeak]
+        d2g_mid_at_peak[it] = d2g_mid[it, ipeak]
+    #ax.loglog(t, r_peak)
+    ax.loglog(t, d2g_mid_at_peak, 'r')
+    # ax.set_xlim(xmin, xmax)
+    ax.set_xlabel("Time [yr]")
+    ax.set_ylabel("Midplane dust-to-gas ratio at peak")
 
     if args.title:
         ax.set_title(titlestr, fontdict={'fontsize': fontsize})
         filename += '_titled'
     if args.text:
         ax.text(0.04, 0.85, textstr, transform=ax.transAxes)
-    ax.xaxis.set_minor_formatter(ScalarFormatter())
-    ax.xaxis.set_minor_formatter(("%.0f"))
-    for axis in [ax.xaxis]:
-        axis.set_major_formatter(ScalarFormatter())
-        ax.set_xticks([30, 60, 90, 120])
+
     # Saving figure
     fig.tight_layout()
     e = getEPS(filename)
     p = getPNG(filename)
     plt.savefig(p["filename"], dpi=300, bbox_inches=p["bbox"], pad_inches=p["pad"])
     # plt.savefig(e["filename"], dpi=300, bbox_inches=e["bbox"], pad_inches=e["pad"])
-    if args.show:
-        plt.show()
+    # if args.show:
+    #     plt.show()
 
 
 if __name__ == "__main__":

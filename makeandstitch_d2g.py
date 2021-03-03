@@ -43,7 +43,7 @@ def main(args):
     columns = 3
     if args.sdr_stat | args.mass_stat | args.dist_stat:
         dirs = [184, 185, 186, 187, 188, 189, 193, 194, 195, 196, 197, 198]
-        # dirs = [184, 185, 186, 187, 188, 189, 190, 191, 192, 196, 197, 198, 199, 200, 201]
+        dirs = [184, 185, 186, 187, 188, 189, 193, 194, 195, 196, 197, 198]
         # dirs = [184, 185, 186, 187, 188, 189, 196, 197, 198]
     else:
         dirs = [202, 203, 204, 206, 207, 208, 210, 211, 212, 214, 215, 216]
@@ -51,7 +51,7 @@ def main(args):
     if args.sdr_stat:
         filename = outputDir + 'sdr_stat'
     elif args.mass_stat:
-        filename = outputDir + 'mass_stat'
+        filename = outputDir + 'mass_stat4_percent'
     elif args.dist_stat:
         filename = outputDir + 'dist_stat'
     elif args.sdr_mov:
@@ -62,7 +62,7 @@ def main(args):
         filename = outputDir + 'dist_mov'
     print("Writing...", filename)
     n = columns*rows
-    fig, ax = plt.subplots(rows, columns, sharex=True, sharey=True, figsize=(12, 16))
+    fig, ax = plt.subplots(rows, columns, sharex=True, sharey=True, figsize=(12, 7))
     i = 0
     for r in range(rows):
         for col in range(columns):
@@ -79,6 +79,7 @@ def main(args):
                 d2g = data.dust.eps
                 SigmaPlan = data.planetesimals.Sigma
                 PlanMass = data.planetesimals.M / M_earth
+
                 center, width, frac, istart, iend = getRingStats(SigmaPlan, w)
                 textstr = getText(PlanMass[-1], center, width, frac)
                 ax[r, col].loglog(R, SigmaGas, label="Gas")
@@ -101,6 +102,7 @@ def main(args):
                 t = w.read.sequence('t') / c.year
                 Nt = t.shape[0]
                 R = w.read.sequence('grid.r') / c.au  # Radial grid cell centers [cm]
+                Nr = R.shape[1]
                 rInt = w.read.sequence('grid.ri')  # Radial grid cell interfaces [cm]
                 SigmaGas = w.read.sequence('gas.Sigma')
                 GasDiskMassEarth = np.sum(np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * SigmaGas[:, :],
@@ -111,12 +113,27 @@ def main(args):
                 DustDiskMassEarth = np.sum(DustMass, axis=1) / M_earth
                 PlanDiskMassEarth = w.read.sequence('planetesimals.M') / M_earth
                 SigmaPlan = w.read.sequence('planetesimals.Sigma')
+                rho_gas = w.read.sequence('gas.rho')
+                rho_dust = w.read.sequence('dust.rho').sum(-1)
+                d2g_mid = rho_dust / rho_gas
 
                 if args.sdr_stat | args.mass_stat | args.dist_stat:
                     [alpha0, amplitude, position] = getJobParams(dirs[i])
-                    iguess = np.argmin(abs(R - position))
+                    iguess = np.argmin(abs(R[-1] - position))
                 else:
-                    iguess = np.argmin(abs(R - 90))
+                    iguess = np.argmin(abs(R[-1] - 90))
+
+                # Obtain initial external dust
+                it = 0
+                initialRightDustTot = SigmaDustTot[it].copy()
+                for ir in range(Nr):
+                    if ir <= iguess:
+                        initialRightDustTot[ir] = 0
+                initialRightDustMass = np.sum(
+                    np.pi * (rInt[it, 1:] ** 2. - rInt[it, :-1] ** 2.) * initialRightDustTot[:]) / M_earth
+                d2g_mid_at_peak = np.zeros(Nt)
+                r_peak = np.zeros(Nt)
+
                 RingDiskMass = np.zeros(Nt)
                 RingDustTot = SigmaDustTot.copy()
                 for k in range(Nt):
@@ -126,10 +143,12 @@ def main(args):
                     dist = ipeak - igap
                     istart = int(ipeak - 0.5 * dist)
                     iend = int(ipeak + 0.5 * dist)
+                    r_peak[k] = R[k, ipeak]
+                    d2g_mid_at_peak[k] = d2g_mid[k, ipeak]
                     if ipeak != igap:
                         RingDiskMass[k] = getRingMass(RingDustTot[k], istart, iend, w)
                 center, width, frac, ist, ien = getRingStats(SigmaPlan[-1], w)
-                textstr = getText(PlanDiskMassEarth[-1], center, width, frac)
+                textstr = getText(PlanDiskMassEarth[-1], center, width, frac, justMass=True, initialExtDust=initialRightDustMass)
                 ax[r, col].loglog(t, GasDiskMassEarth, label="Gas", color="C0")
                 ax[r, col].loglog(t, DustDiskMassEarth, label="Dust", color="C1")
                 ax[r, col].loglog(t, RingDiskMass, ls='--', label="Ring Dust", color="C4")
@@ -137,8 +156,15 @@ def main(args):
                 if col == (columns - 1) and r == 0:
                     ax[r, col].legend(loc='upper right', frameon=True)
                 ax[r, col].set_xlim(1.01e4, 1e7)
-                ax[r, col].set_ylim(1e0, 2e5)
-                ax[r, col].text(0.04, 0.9, textstr, transform=ax[r, col].transAxes)
+                ax[r, col].set_ylim(1e0, 1e3)
+                ax[r, col].text(0.02, 0.88, textstr, transform=ax[r, col].transAxes)
+                ax[r, col].tick_params(axis='both', which='both')
+                ax2 = ax[r, col].twinx()  # instantiate a second axes that shares the same x-axis
+                color = 'tab:gray'
+                #ax2.set_ylabel('Midplane d2g ratio at peak', color=color, rotation=-90)
+                ax2.loglog(t, d2g_mid_at_peak, '-.', linewidth=0.5, color=color)
+                ax2.tick_params(axis='y', labelcolor=color)
+
             elif args.dist_stat | args.dist_mov:
                 t = w.read.sequence('t') / c.year
                 Nt = t.shape[0]
@@ -196,11 +222,14 @@ def main(args):
             i += 1
 
     # Saving figure
-    mid = 0.52
-    sep = 0.31
+    mid = 0.50
+    far = 0.96
+    sep = 0.30
     pos_height = 0.97
     title_height = 0.985
-    plt.subplots_adjust(left=0.055, bottom=0.03, right=0.98, top=0.95, wspace=0, hspace=0.1)
+    plt.subplots_adjust(left=0.05, bottom=0.07, right=0.95, top=0.95, wspace=0, hspace=0)
+    plt.subplots_adjust(left=0.05, bottom=0.07, right=0.93, top=0.95, wspace=0, hspace=0) # d2g
+    d2g = 0.02
     if args.dist_stat | args.dist_mov:
         mid = mid - 0.09
         sep = sep - 0.05
@@ -209,17 +238,19 @@ def main(args):
         fig.text(mid - sep, pos_height, r'$r_{\rm p}$ = 30 au', ha='center', va='center', fontsize=fontsize)
         fig.text(mid, pos_height, r'$r_{\rm p}$ = 60 au', ha='center', va='center', fontsize=fontsize)
         fig.text(mid + sep, pos_height, r'$r_{\rm p}$ = 90 au', ha='center', va='center', fontsize=fontsize)
-        fig.text(mid, title_height, "Stationary pressure trap evolved for 10 Myr", ha='center', va='center', fontsize=fontsize)
+        # fig.text(mid, title_height, "Stationary pressure trap evolved for 10 Myr", ha='center', va='center', fontsize=fontsize)
     else:
         fig.text(mid-sep, pos_height, r'$f = 10\%$', ha='center', va='center', fontsize=fontsize)
         fig.text(mid, pos_height, r'$f = 30\%$', ha='center', va='center', fontsize=fontsize)
         fig.text(mid+sep, pos_height, r'$f = 100\%$', ha='center', va='center', fontsize=fontsize)
-        fig.text(mid, title_height, "Migrating pressure trap initially at 90 au evolved for 10 Myr", ha='center', va='center',
-                 fontsize=fontsize)
-    fig.text(mid, 0.956, r'$\alpha = 10^{-3}$, A = 3', ha='center', va='center', fontsize=fontsize)
-    fig.text(mid, 0.7205, r'$\alpha = 10^{-3}$, A = 10', ha='center', va='center', fontsize=fontsize)
-    fig.text(mid, 0.4855, r'$\alpha = 10^{-4}$, A = 3', ha='center', va='center', fontsize=fontsize)
-    fig.text(mid, 0.25, r'$\alpha = 10^{-4}$, A = 10', ha='center', va='center', fontsize=fontsize)
+        #fig.text(mid, title_height, "Migrating pressure trap initially at 90 au evolved for 10 Myr", ha='center', va='center',
+              #   fontsize=fontsize)
+    fig.text(far+d2g, 0.84, 'A = 3', ha='center', va='center', rotation=-90, fontsize=fontsize)
+    fig.text(far+d2g, 0.62, 'A = 10', ha='center', va='center', rotation=-90, fontsize=fontsize)
+    fig.text(far+d2g, 0.39, 'A = 3', ha='center', va='center', rotation=-90, fontsize=fontsize)
+    fig.text(far+d2g, 0.18, 'A = 10', ha='center', va='center', rotation=-90, fontsize=fontsize)
+    fig.text(far+0.02+d2g, 0.29, r'$\alpha = 10^{-4}$', ha='center', va='center', rotation=-90, fontsize=fontsize)
+    fig.text(far+0.02+d2g, 0.73, r'$\alpha = 10^{-3}$', ha='center', va='center', rotation=-90, fontsize=fontsize)
     if args.sdr_stat | args.sdr_mov:
         fig.text(0, 0.5, 'Surface density [g/cm²]', ha='center', va='center', rotation='vertical', fontsize=fontsize)
         fig.text(mid, 0, 'Distance from star [au]', ha='center', va='center', fontsize=fontsize)
@@ -233,8 +264,8 @@ def main(args):
         cbarcmap = plt.colorbar(pltcmap, ax=ax, fraction=0.05, aspect=70, pad=0.01)
         cbarcmap.ax.set_ylabel("$\log\ \sigma$ [g/cm²]")
     p = getPNG(filename)
-    plt.savefig(filename+'.png', dpi=300, bbox_inches=p["bbox"], pad_inches=0.01)
-    plt.savefig(filename+'.eps', dpi=300, bbox_inches=p["bbox"], pad_inches=0.01)
+    plt.savefig(filename+'.png', dpi=300, bbox_inches=p["bbox"], pad_inches=0.05)
+    plt.savefig(filename+'.eps', dpi=300, bbox_inches=p["bbox"], pad_inches=0.05)
     plt.show()
 
 

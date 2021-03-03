@@ -46,6 +46,7 @@ def main(args):
     t = w.read.sequence('t') / c.year
     Nt = t.shape[0]
     R = w.read.sequence('grid.r') / c.au  # Radial grid cell centers [cm]
+    Nr = R.shape[1]
     rInt = w.read.sequence('grid.ri')  # Radial grid cell interfaces [cm]
     SigmaGas = w.read.sequence('gas.Sigma')
     SigmaGasTot = np.sum(SigmaGas, axis=-1)
@@ -56,28 +57,43 @@ def main(args):
     DustDiskMassEarth = np.sum(DustMass, axis=1) / M_earth
     PlanDiskMassEarth = w.read.sequence('planetesimals.M') / M_earth
     SigmaPlan = w.read.sequence('planetesimals.Sigma')
+    rho_gas = w.read.sequence('gas.rho')
+    rho_dust = w.read.sequence('dust.rho').sum(-1)
+    d2g_mid = rho_dust / rho_gas
 
     # Text plotting
     RingDustTot = SigmaDustTot.copy()
     RingDiskMass = np.zeros(Nt)
-    [alpha0, amplitude, position] = getJobParams(z)
+    if z <= 201:
+        [alpha0, amplitude, position] = getJobParams(z)
+    else:
+        position = 90
+    iguess = (np.abs(R[0] - position)).argmin()
 
-    # Starting guess
-    iguess = np.argmin(abs(R-position))
+    # Obtain initial external dust
+    it = 0
+    initialRightDustTot = SigmaDustTot[it].copy()
+    for i in range(Nr):
+        if i <= iguess:
+            initialRightDustTot[i] = 0
+    initialRightDustMass = np.sum(np.pi * (rInt[it, 1:] ** 2. - rInt[it, :-1] ** 2.) * initialRightDustTot[:]) / M_earth
+    d2g_mid_at_peak = np.zeros(Nt)
+    r_peak = np.zeros(Nt)
     for i in range(Nt):
-        # Find igap
-        igap = np.argmin(SigmaGas[i, 0:iguess+10])
+        igap = np.argmin(SigmaGas[i, 0:iguess + 10])
         iguess = igap
         ipeak = np.argmax(SigmaDustTot[i, igap:igap + 35]) + igap
         dist = ipeak - igap
         istart = int(ipeak - 0.5 * dist)
         iend = int(ipeak + 0.5 * dist)
         center, width, frac, istart2, iend2 = getRingStats(SigmaPlan[i], w)
+        r_peak[i] = R[i, ipeak]
+        d2g_mid_at_peak[i] = d2g_mid[i, ipeak]
         if ipeak != igap:
             RingDiskMass[i] = getRingMass(RingDustTot[i], istart, iend, w)
-        print(t[i] * 1e-6, igap, iend, RingDiskMass[i])
+        # print(t[i] * 1e-6, igap, iend, RingDiskMass[i])
 
-    textstr = getText(PlanDiskMassEarth[-1], center, width, frac)
+    textstr = getText(PlanDiskMassEarth[-1], center, width, frac, initialExtDust=initialRightDustMass)
     titlestr = getTitle(z, w)
 
     fig, ax = plt.subplots()
@@ -87,8 +103,9 @@ def main(args):
     ax.loglog(t, PlanDiskMassEarth, label="Planetesimals", color="C2")
     ax.set_xlim(1e4, 1e7)
     ax.set_ylim(1e0, 1e6)
-    ax.legend(loc='upper right')
-    ax.lineTime = ax.axvline(t[0], color="C7", zorder=-1, lw=1)
+
+    # ax.legend(loc='upper right')
+
     filename = outputDir + 'mass/m' + str(z)
     if args.title:
         ax.set_title(titlestr, fontdict={'fontsize': fontsize})
@@ -97,6 +114,12 @@ def main(args):
         ax.text(0.04, 0.85, textstr, transform=ax.transAxes)
     ax.set_xlabel("Time [Myr]")
     ax.set_ylabel("Mass [M$_\oplus$]")
+
+    ax2 = ax.twinx()  # instantiate a second axes that shares the same x-axis
+    color = 'tab:gray'
+    ax2.set_ylabel('Midplane d2g ratio at peak', color=color, rotation=-90)  # we already handled the x-label with ax1
+    ax2.loglog(t, d2g_mid_at_peak, '-.', linewidth=0.5, color=color)
+    ax2.tick_params(axis='y', labelcolor=color)
 
     # Saving figure
     fig.tight_layout()

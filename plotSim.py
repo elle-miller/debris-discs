@@ -109,11 +109,12 @@ def main(args):
     rightDustDiskMass = np.sum(np.pi * (rInt[it, 1:] ** 2. - rInt[it, :-1] ** 2.) * RightDustTot[:]) / M_earth
     print("Dust left of bump (Earths): ", leftDustDiskMass)
     print("Dust right of bump (Earths): ", rightDustDiskMass)
+    return
     fig, ax = plt.subplots()
     ax.loglog(R[it], DustMass[it] / M_earth)
     ax.vlines(R[it, iBumpPeakPos], 0, np.max(DustMass[it]) / M_earth, 'r')
     plt.show()
-    return
+
 
     # Gas information
     SigmaGas = w.read.sequence('gas.Sigma')

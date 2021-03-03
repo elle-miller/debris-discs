@@ -1,10 +1,15 @@
 def getJobParams(outputDir):
 
     # wide
-    if outputDir == 232:
+    if outputDir == 232 :
         return [1e-3, 10, 90]
-    elif outputDir == 233 or outputDir == 234:
+    elif outputDir == 233 or outputDir == 234 or outputDir == 236 or outputDir == 237:
         return [1e-3, 10, 120]
+    # wide
+    if outputDir == 235:
+        return [1e-3, 30, 90]
+    elif outputDir == 236 or outputDir == 237:
+        return [1e-3, 30, 120]
 
     # vfrag
     alphaL = [1e-4]
