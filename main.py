@@ -103,7 +103,7 @@ def setInitConds(s, args, verbose):
     # Dust
     s.ini.dust.vfrag = args.vfrag
     s.ini.dust.allowDriftingParticles = True
-    # s.ini.dust.aIniMax = 1.0
+    s.ini.dust.aIniMax = 1.0
 
     # Bump
     s.addgroup("bump", description="Bump quantities")
@@ -205,8 +205,13 @@ def setSimulationParams(s, args):
     if not args.gasEvolution:
         del (s.integrator.instructions[1])
 
-    # s.dust.S.coag = 0
-    # s.dust.S.coag.updater = None
+    s.dust.p.stick = 0.
+    s.dust.p.frag = 0.
+    s.dust.p.updater = None
+    s.dust.p.updater = None
+    s.dust.v.rel.updater = None
+    s.dust.v.frag.updater = None
+    s.dust.kernel.updater = None
     if not args.dustEvolution:
         # Turn off all dust evolution
         s.dust.S.tot = 0.
