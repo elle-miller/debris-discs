@@ -78,14 +78,17 @@ def main(args):
             initialRightDustTot[i] = 0
     initialRightDustMass = np.sum(np.pi * (rInt[it, 1:] ** 2. - rInt[it, :-1] ** 2.) * initialRightDustTot[:]) / M_earth
     d2g_mid_at_peak = np.zeros(Nt)
+    dist = np.zeros(Nt)
     r_peak = np.zeros(Nt)
     for i in range(Nt):
         igap = np.argmin(SigmaGas[i, 0:iguess + 10])
         iguess = igap
         ipeak = np.argmax(SigmaDustTot[i, igap:igap + 35]) + igap
-        dist = ipeak - igap
-        istart = int(ipeak - 0.5 * dist)
-        iend = int(ipeak + 0.5 * dist)
+        dist[i] = R[i, ipeak] - R[i, igap]
+        Rstart = R[i, ipeak] + 0.5 * dist[i]
+        Rend = R[i, ipeak] + 0.5 - dist[i]
+        istart = int(np.argmin(R[-1]-Rstart))
+        iend = int(np.argmin(R[-1]-Rend))
         center, width, frac, istart2, iend2 = getRingStats(SigmaPlan[i], w)
         r_peak[i] = R[i, ipeak]
         d2g_mid_at_peak[i] = d2g_mid[i, ipeak]
@@ -96,7 +99,6 @@ def main(args):
     textstr = getText(PlanDiskMassEarth[-1], center, width, frac, initialExtDust=initialRightDustMass)
     titlestr = getTitle(z, w)
 
-    fig, ax = plt.subplots()
     ax.loglog(t, GasDiskMassEarth, label="Gas", color="C0")
     ax.loglog(t, DustDiskMassEarth, label="Dust", color="C1")
     ax.loglog(t, RingDiskMass, ls='--', label="Ring Dust", color="C4")

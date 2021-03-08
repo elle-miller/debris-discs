@@ -13,6 +13,8 @@ from dustpy import hdf5writer as w
 from dustpy import readdump
 from dustpy import constants as c
 from jobInfo import getJobParams
+from plottingFunctions import *
+from matplotlib.ticker import ScalarFormatter
 M_earth = 5.9722e24 * 1e3  # [g]
 
 width_inches = 6 # inches
@@ -206,15 +208,14 @@ def movieBump(z, dataDir, dir, sd=True, fps=35, still=None):
     fig = plt.figure()
     gs = gridspec.GridSpec(nrows=1, ncols=1) #, width_ratios=[20,1])
 
-    ptot = f"{PlanDiskMassEarth[Nt - 1]:.1f}"
-    textstr = "Plan Mass: " + str(ptot) + " Earths"
+
     stationary = False
-    if z >= 150:
+    if z <= 201:
         stationary = True
     if stationary:
         basetitle = r"$\alpha$" + "={a}, A={A}, r$_p$={v}au, ".format(a=alpha, A=amplitude, v=velocity)
     else:
-        basetitle = r"$\alpha$" + "={a}, A={A}, v={v}%, ".format(a=alpha, A=amplitude, v=velocity)
+        basetitle = r"$\alpha$" + "={a}, A={A}, v={v}\%, ".format(a=alpha, A=amplitude, v=velocity)
     if still is None:
         # the update/image creation loop
         if z <= 201:
@@ -222,33 +223,55 @@ def movieBump(z, dataDir, dir, sd=True, fps=35, still=None):
         else:
             position = 90
         iguess = np.argmin(abs(R[-1] - position))
+
+        # Obtain initial external dust
+        it = 0
+        initialRightDustTot = SigmaDustTot[it].copy()
+        for ir in range(Nr):
+            if ir <= iguess:
+                initialRightDustTot[ir] = 0
+        initialRightDustMass = np.sum(
+            np.pi * (rInt[it, 1:] ** 2. - rInt[it, :-1] ** 2.) * initialRightDustTot[:]) / M_earth
+
         for it in range(Nt):
             igap = np.argmin(SigmaGas[it, 0:iguess + 10])
             iguess = igap
             ipeak = np.argmax(SigmaDustTot[it, igap:igap + 35]) + igap
-            dist = ipeak - igap
-            istart = int(ipeak - 0.5 * dist)
-            iend = int(ipeak + 0.5 * dist)
-
+            dist = R[it, ipeak] - R[it, igap]
+            Rstart = R[it, ipeak] + 0.5 * dist
+            Rend = R[it, ipeak] + 0.5 - dist
+            istart = int(np.argmin(R[-1] - Rstart))
+            iend = int(np.argmin(R[-1] - Rend))
+            center, width, frac, ist, ien = getRingStats(SigmaPlan[it], w)
+            textstr = getText(PlanDiskMassEarth[it], center, width, frac, justMass=True,
+                              initialExtDust=initialRightDustMass)
             ax0 = fig.add_subplot(gs[0, 0])
             titlestr = basetitle + '{t:.2f} Myr'.format(t=tMyr[it])
             ax0.set_title(titlestr, fontdict={'fontsize': fontsize})
-            ax0.text(0.05, 0.92, textstr, transform=ax0.transAxes, fontsize=10)
+            ax0.text(0.03, 0.92, textstr, transform=ax0.transAxes, fontsize=14)
             ax0.set_xlabel("Distance from star [au]")
-            fig.tight_layout()
+            ax0.xaxis.set_minor_formatter(ScalarFormatter())
+            ax0.xaxis.set_minor_formatter(("%.0f"))
+            for axis in [ax0.xaxis]:
+                axis.set_major_formatter(ScalarFormatter())
+                ax0.set_xticks([30, 60, 90, 120])
+            # fig.tight_layout()
 
             if sd is True:
-                ymin = 1e-6
-                ymax = 1e4
+                ymin = 1e-4
+                ymax = 1e3
                 ax0.set_ylim(ymin, ymax)
-                ax0.set_ylabel("Surface Density [g/cm²]")
+                ax0.set_xlim(10, 120)
+                ax0.set_ylabel("Surface density [g/cm²]")
                 ax0.loglog(R[it, ...], SigmaDustTot[it, ...], label="Dust")
                 ax0.loglog(R[it, ...], SigmaGas[it, ...], label="Gas")
                 ax0.loglog(R[it, ...], SigmaPlan[it, ...], label="Planetesimals")
-                ax0.loglog(R[it, ...], d2g[it, ...], label="Dust-to-gas ratio")
-                ax0.vlines(R[it, ipeak], ymin, ymax, 'r')
-                ax0.vlines(R[it, istart], ymin, ymax, 'gray', '--')
-                ax0.vlines(R[it, iend], ymin, ymax, 'gray', '--')
+                ax0.loglog(R[it, ...], d2g_mid[it, ...], color='tab:grey', ls='-.', label="Dust-to-gas ratio")
+                # ax0.vlines(R[it, ipeak], ymin, ymax, 'r')
+                # ax0.vlines(R[it, igap], ymin, ymax, 'b')
+                # ax0.vlines(rInt[it, igap] / c.au, ymin, ymax, 'b', '--')
+                # ax0.vlines(Rstart, ymin, ymax, 'gray', '--')
+                # ax0.vlines(Rend, ymin, ymax, 'gray', '--')
                 # ax0.legend(loc='upper right')
             else:
                 pltcmap = ax0.contourf(r / c.au,
@@ -292,42 +315,15 @@ def movieBump(z, dataDir, dir, sd=True, fps=35, still=None):
                 ax0.set_ylabel("Particle mass [g]")
 
             # save image
-            fig.savefig(os.path.join(tempdir,'img_{:03d}.png'.format(it))) #bbox_inches="tight") #, pad_inches=0.05)
+            fig.savefig(os.path.join(tempdir, 'img_{:03d}.png'.format(it))) #bbox_inches="tight") #, pad_inches=0.05)
             plt.cla()
             plt.clf()
 
         # create movie
-        ret = subprocess.call(['ffmpeg', '-i', os.path.join(tempdir, 'img_%03d.png'), '-c:v', 'libx264',
+        ret = subprocess.call(['ffmpeg', '-i', os.path.join(tempdir, 'img_%03d.png'), '-vf', "setpts=8*PTS", '-c:v', 'libx264',
                                '-crf', '15', '-maxrate', '400k', '-pix_fmt', 'yuv420p', '-r', str(fps),
-                               '-bufsize', '1835k', '-t', '00:00:05', moviename + '.mp4'])
+                               '-bufsize', '1835k', '-t', '00:00:10', moviename + '.mp4'])
         shutil.rmtree(tempdir, ignore_errors=True)
-        # delete_imgs = ''
-        # try:
-        #     ret = subprocess.call(['ffmpeg', '-i', os.path.join(tempdir,'img_%03d.png'), '-c:v', 'libx264',
-        #                            '-crf', '15', '-maxrate', '400k', '-pix_fmt', 'yuv420p', '-r', str(fps),
-        #                            '-bufsize', '1835k', '-t', '00:00:05', moviename + '.mp4'])
-        #     if ret == 0:
-        #         delete_imgs = 'y'
-        #         print('Movie created successfully')
-        # except Exception as e:
-        #
-        #     # display the error
-        #
-        #     logging.error(traceback.format_exc())
-        #     delete_imgs = ''
-        #
-        # finally:
-        #
-        #     # ask if images should be kept
-        #
-        #     while delete_imgs.lower() not in ['y', 'n']:
-        #         delete_imgs = input("Error during movie creation, delete images [y/n]").lower()
-        #
-        #     if delete_imgs == 'y':
-        #         print('Deleting images.')
-        #         shutil.rmtree(tempdir, ignore_errors=True)
-        #     else:
-        #         print('Keeping images. They can be found in folder \'{}\''.format(tempdir))
 
 
 def num2tex(n, x=2, y=2):

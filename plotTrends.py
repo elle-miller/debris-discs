@@ -36,53 +36,48 @@ width = 0.5
 # Center, ring width and fractional width data for moving bump
 floor = 0
 velocity = [10, 30, 100]
-centerList310 = [108.1, 92, 51.2]
-widthList310 = [12, 31.9, 64.3]
-fracList310 = [0.11, 0.35, 1.26]
-widthList410 = [4.2, 6.3, 13.1]
-centerList410 = [114.1, 113.1, 109.2]
-fracList410 = [0.04, 0.06, 0.13]
 
 # Ring start and end information for moving bump
-vel2 = [10, 30, 50, 75, 100, 300]
-vel3 = [10, 30, 100, 300]
-vel = [10, 30, 100, 300]
-start310 = [114.12, 98.464, 52.59, 19.425]
-end310 = [98.464, 54.57, 14.46, 15.568]
-start330 = [122.86, 102.16, 84.956, 65.622, 54.57, 16.76]
-end330 = [102.16, 56.62, 15, 15, 14.46, 16.1535]
-start410 = [122.857, 118.4077, 118.4077, 118.4077]
-end410 = [114.12, 109.986, 98.4639, 54.569]
-start430 = [127.474, 127.474, 127.474, 127.474]
-end430 = [122.857, 118.4077, 102.164, 56.62]
+start310 = [103.115, 76.764, 19.248]
+end310 = [115.182, 108.981, 87.343]
+start410 = [113.077, 111.010, 103.115]
+end410 = [117.326, 117.326, 117.326]
 
-# plotPositions3 = True
-# if plotPositions3:
-#     vel4 = [0, 10, 30, 100, 300]
-#     start310 = [114.12, 98.464, 52.59, 19.425]
-#     end310 = [98.464, 54.57, 14.46, 15.568]
-#     start330 = [122.86, 102.16, 54.57, 16.76]
-#     end330 = [102.16, 56.62, 14.46, 16.1535]
-#     start410 = [118.4077, 122.857, 118.4077, 118.4077, 118.4077]
-#     end410 = [114.12, 114.12, 109.986, 98.4639, 54.569]
-#     start430 = [127.474, 127.474, 127.474, 127.474, 127.474]
-#     end430 = [122.857, 122.857, 118.4077, 102.164, 56.62]
-#     fig, ax = plt.subplots()
-#     ax.plot(vel, start330, markersize=markersize, marker='*', ls='--', color="C0", label=r"$\alpha_0$ = 1e-3")
-#     ax.plot(vel, end330, markersize=markersize, marker='*', ls='--', color="C0")
-#     ax.plot(vel4, start430, markersize=markersize, marker='.', ls='-.', color="C3", label=r"$\alpha_0$ = 1e-4")
-#     ax.plot(vel4, end430, markersize=markersize, marker='.', ls='-.', color="C3")
-#     ax.tick_params(axis='y', which='both', length=length, width=width, labelsize=labelsize)
-#     ax.tick_params(axis='x', which='both', length=length, width=width, labelsize=labelsize)
-#     ax.set_xlabel("Bump velocity as \% of nominal", fontsize=fontsize)
-#     ax.set_ylabel("Final ring location [AU]", fontsize=fontsize)
-#     ax.legend(fontsize=fontsize - 4, loc='lower left')
-#     ax.set_ylim(0, 140)
-#     ax.set_title("A = 30 bump at 90 au evolved for 10 Myr", fontsize=fontsize)
-#     fig.tight_layout()
-#     plt.savefig('/media/elle/Seagate Backup Plus Drive/2020/mpia/mpia/paperplots/ring10.png', format='png',
-#                 dpi=600)
-#     plt.show()
+# Ring things
+centerList310 = [109.204, 93.021, 53.610]
+widthList310 = [14.080, 33.930, 69.078]
+fracList310 = [0.129, 0.365, 1.289]
+widthList410 = [6.374, 8.421, 16.244]
+centerList410 = [115.221, 114.197, 110.286]
+fracList410 = [0.055, 0.074, 0.147]
+
+# Unfair test - 208 only went to 7.3564225445964215
+timeLeft = (10 - 7.3564225445964215)  # Myr
+B = 10036.134705742197  # au/Myr
+distLeft = 1e-3*B*timeLeft
+start310[2] -= distLeft
+widthList310[2] += distLeft
+centerList310[2] = 0.5*(end310[2]-start310[2])
+fracList310[2] = widthList310[2]/centerList310[2]
+
+plotPositions3 = True
+if plotPositions3:
+
+    fig, ax = plt.subplots()
+    ax.plot(velocity, start310, markersize=markersize, marker='*', ls='--', color="C0", label=r"$\alpha_0$ = 1e-3")
+    ax.plot(velocity, end310, markersize=markersize, marker='*', ls='--', color="C0")
+    ax.plot(velocity, start410, markersize=markersize, marker='.', ls='-.', color="C3", label=r"$\alpha_0$ = 1e-4")
+    ax.plot(velocity, end410, markersize=markersize, marker='.', ls='-.', color="C3")
+    ax.tick_params(axis='y', which='both', length=length, width=width, labelsize=labelsize)
+    ax.tick_params(axis='x', which='both', length=length, width=width, labelsize=labelsize)
+    ax.set_xlabel("Bump velocity as \% of nominal", fontsize=fontsize)
+    ax.set_ylabel("Final ring location [au]", fontsize=fontsize)
+    ax.legend(fontsize=fontsize - 4, loc='lower left')
+    ax.set_ylim(0, 140)
+    ax.set_title("A = 10 bump at 90 au evolved for 10 Myr", fontsize=fontsize)
+    fig.tight_layout()
+    plt.savefig(outputDir + 'ringpositions.png', dpi=300)
+    plt.show()
 
 plot34 = True
 if plot34:
@@ -140,8 +135,7 @@ if plot34:
 
     # Formatting
     fig.tight_layout()
-    plt.savefig(outputDir + figname + '.png', format='png',
-                dpi=600)
+    plt.savefig(outputDir + figname + '.png')
     plt.show()
 
 plotRingChars4 = True

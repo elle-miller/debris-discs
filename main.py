@@ -103,6 +103,7 @@ def setInitConds(s, args, verbose):
     # Dust
     s.ini.dust.vfrag = args.vfrag
     s.ini.dust.allowDriftingParticles = True
+    # s.ini.dust.aIniMax = 1.0
 
     # Bump
     s.addgroup("bump", description="Bump quantities")
@@ -204,6 +205,8 @@ def setSimulationParams(s, args):
     if not args.gasEvolution:
         del (s.integrator.instructions[1])
 
+    # s.dust.S.coag = 0
+    # s.dust.S.coag.updater = None
     if not args.dustEvolution:
         # Turn off all dust evolution
         s.dust.S.tot = 0.
@@ -232,7 +235,7 @@ def setSimulationParams(s, args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-z', action="store", dest="outputDirNo", type=int, default=1, help="Simulation number")
-    parser.add_argument('-s', action="store", dest="minyear", type=float, default=3, help="Beginning year 10^x")
+    parser.add_argument('-s', action="store", dest="minyear", type=float, default=5, help="Beginning year 10^x")
     parser.add_argument('-e', action="store", dest="maxyear", type=float, default=7, help="Ending year 10^x")
     parser.add_argument('-n', action="store", dest="nsnap", type=int, default=31, help="Number of snapshots")
     parser.add_argument('-r', action="store", dest="Nr", type=int, default=200, help="Number of radial bins")

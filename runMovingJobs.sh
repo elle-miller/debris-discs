@@ -2,14 +2,17 @@
 
 # Bash script to run the mpi script multiple times for varying parameters
 # Date: Sharp formation, tanh commented out
-startingDir=239
+startingDir=270
 n=31
 radialRes=200
-position=90
+# position=90
 amplitude=10
 velocity=1
 alpha=3
-sbatch job.sh $startingDir $alpha $amplitude $velocity $position $n $radialRes
+for position in 60 80 85; do
+  sbatch job.sh $startingDir $alpha $amplitude $velocity $position $n $radialRes
+  ((startingDir+=1))
+done
 
 #for alpha in 3 4; do
 #  for amplitude in 3 10; do

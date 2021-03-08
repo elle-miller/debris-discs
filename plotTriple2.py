@@ -12,7 +12,9 @@ from os import path
 from os import getcwd
 from matplotlib.ticker import ScalarFormatter
 from plottingFunctions import *
+from matplotlib.cm import get_cmap
 
+sdr_colors = [i for i in get_cmap('tab20').colors]
 # Global settings
 M_earth = 5.9722e24 * 1e3  # [g]
 
@@ -32,7 +34,7 @@ plt.rcParams["figure.figsize"] = width_inches, height_inches
 # Read all data in the directory
 fig, ax = plt.subplots(3, 1, sharex=True, sharey=True, figsize=(width_inches, 2.5*height_inches))
 
-plot3 = True
+plot3 = False
 if plot3:
     firstendring = 116
     dir = [206, 207, 208]
@@ -59,6 +61,9 @@ for z in dir:
     SigmaPlan = w.read.sequence('planetesimals.Sigma')
     SigmaPlanTot = np.sum(SigmaPlan, axis=-1)
     PlanMass = w.read.sequence('planetesimals.M') / M_earth
+    rho_gas = w.read.sequence('gas.rho')
+    rho_dust = w.read.sequence('dust.rho').sum(-1)
+    d2g_mid = rho_dust / rho_gas
 
     # Text plotting
     [alpha0, amplitude, position] = getJobParams(z)
@@ -67,30 +72,32 @@ for z in dir:
     titlestr = r'$f = {p}\%$'.format(p=position)
 
     # Plot the surface density of dust and gas vs the distance from the star
-    ax[i].loglog(R[-1, ...], SigmaGas[-1, ...], label="Gas")
-    ax[i].loglog(R[-1, ...], SigmaDustTot[-1, ...], label="Dust")
-    ax[i].loglog(R[-1, ...], SigmaPlan[-1, ...], label="Plan")
-    ax[i].loglog(R[-1, ...], d2g[-1, ...], ls='--', label="d2g")
-    ymax = 1e3
-    ymin = 1e-5
+    ax[i].loglog(R[-1, ...], SigmaGas[-1, ...], color=sdr_colors[0], label="Gas")
+    ax[i].loglog(R[-1, ...], SigmaDustTot[-1, ...], color=sdr_colors[2], label="Dust")
+    ax[i].loglog(R[-1, ...], SigmaPlan[-1, ...], color=sdr_colors[4], label="Planetesimals", )
+    ax[i].loglog(R[-1, ...], d2g_mid[-1, ...], color=sdr_colors[14], ls='-.', label=r"$\rho_d/\rho_g$", linewidth=1.2)
+    ymax = 0.5e2
+    ymin = 3e-5
     ax[i].set_ylim(ymin, ymax)
     ax[i].set_xlim(12, 130)
     ax[i].set_title(titlestr, fontdict={'fontsize': fontsize, 'font': 'serif'})
-    ax[i].text(0.04, 0.88, textstr, transform=ax[i].transAxes)
-    ax[i].vlines(firstendring, ymin, ymax, 'tab:gray', linewidth=0.9, ls='--')
-    # ax[i].xaxis.set_minor_formatter(ScalarFormatter())
+    #ax[i].text(0.04, 0.88, textstr, transform=ax[i].transAxes)
+    ax[i].vlines(firstendring, ymin, ymax, color=sdr_colors[6], linewidth=1.2, ls='--')
+    if i == 0:
+        ax[i].legend(framealpha=1.0, loc='upper left')
+    ax[i].minorticks_on()
+    ax[i].xaxis.set_minor_formatter(ScalarFormatter())
     ax[i].xaxis.set_minor_formatter(("%.0f"))
-    for axis in [ax[i].xaxis]:
-        axis.set_major_formatter(ScalarFormatter())
-        ax[i].set_xticks([30, 60, 90, 120])
+    ax[i].xaxis.set_major_formatter(ScalarFormatter())
+    ax[i].set_xticks([30, 60, 90, 120])
     i = i + 1
 
 fig.tight_layout()
 fig.text(0.5, 0.01, 'Distance from star [au]', ha='center', va='center', fontsize=fontsize)
-fig.text(0.02, 0.5, 'Surface density [g/cm²]', ha='center', va='center', rotation='vertical', fontsize=fontsize)
+fig.text(0.01, 0.5, 'Surface density [g/cm²]', ha='center', va='center', rotation='vertical', fontsize=fontsize)
 
 e = getEPS(filename)
 p = getPNG(filename)
-plt.savefig(p["filename"], dpi=300, bbox_inches=p["bbox"], pad_inches=0.03)
+plt.savefig(p["filename"], dpi=300, bbox_inches=p["bbox"], pad_inches=0.05)
 #plt.savefig(e["filename"], dpi=300, bbox_inches=e["bbox"], pad_inches=e["pad"])
 plt.show()

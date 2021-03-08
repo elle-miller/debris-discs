@@ -42,9 +42,11 @@ def main(args):
 
     # Read all data in the directory
     z = args.z
-    print("Sim #", z)
+    # print("Sim #", z)
     w.datadir = getDataDir(z)
     outputDir = localDir + '/simplots/'
+
+    SigmaPlan = w.read.sequence('planetesimals.Sigma')
 
     if args.plotSDMovie:
         movieBump(z, w.datadir, outputDir + 'movies/sdr/', sd=True)
@@ -57,9 +59,13 @@ def main(args):
     t = w.read.sequence('t') / c.year
     Nt = t.shape[0]
     tMyr = t / 1e6
-    tMyrEnd = tMyr[Nt - 1]
+    it = -2
+    tMyrEnd = tMyr[it]
     print("tMyrEnd = ", tMyrEnd)
-
+    R = w.read.sequence('grid.r') / c.au
+    center, width, frac, istart, iend = getRingStats(SigmaPlan[it], w)
+    print("#{z}: Center = {c1:8.3f}, Width = {w1:7.3f}, Frac = {f:6.3f}, Start = {s:8.3f}, End = {e:8.3f}".format(z=z, c1=center, w1=width, f=frac, s=R[-1, istart], e=R[-1, iend]))
+    return
     # Mass data
     m = w.read.sequence('grid.m')  # Mass grid field [g]
     Nm = m.shape[1]  # Number of mass bins
@@ -107,13 +113,13 @@ def main(args):
             LeftDustTot[i] = 0
     leftDustDiskMass = np.sum(np.pi * (rInt[it, 1:] ** 2. - rInt[it, :-1] ** 2.) * LeftDustTot[:]) / M_earth
     rightDustDiskMass = np.sum(np.pi * (rInt[it, 1:] ** 2. - rInt[it, :-1] ** 2.) * RightDustTot[:]) / M_earth
-    print("Dust left of bump (Earths): ", leftDustDiskMass)
-    print("Dust right of bump (Earths): ", rightDustDiskMass)
-    return
-    fig, ax = plt.subplots()
-    ax.loglog(R[it], DustMass[it] / M_earth)
-    ax.vlines(R[it, iBumpPeakPos], 0, np.max(DustMass[it]) / M_earth, 'r')
-    plt.show()
+    # print("Dust left of bump (Earths): ", leftDustDiskMass)
+    # print("Dust right of bump (Earths): ", rightDustDiskMass)
+
+    # fig, ax = plt.subplots()
+    # ax.loglog(R[it], DustMass[it] / M_earth)
+    # ax.vlines(R[it, iBumpPeakPos], 0, np.max(DustMass[it]) / M_earth, 'r')
+    # plt.show()
 
 
     # Gas information

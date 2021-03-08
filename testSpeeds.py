@@ -8,16 +8,17 @@ from matplotlib import pyplot as plt
 localDir = '/media/elle/Seagate Backup Plus Drive/2020/mpia/debris-discs'
 
 # Using seaborn's style
+width_inches = 6 # inches
+golden_ratio = 3/4
+height_inches = golden_ratio * width_inches
 fontsize = 14
 labelsize = 14
 plt.style.use('seaborn-paper')
-plt.rc('text', usetex=True)
-plt.rc('font', size=fontsize, family='serif')
-plt.rcParams['legend.fontsize'] = fontsize
-plt.rc('xtick', labelsize=labelsize)
-plt.rc('ytick', labelsize=labelsize)
-plt.rc('axes', labelsize=fontsize)
+plt.style.use('tex')
+plt.rcParams["figure.figsize"] = width_inches, height_inches
 fig, ax = plt.subplots()
+
+colors = ["darkmagenta", "orchid"]
 
 # constants
 au = 1.495978707e11
@@ -34,28 +35,46 @@ print("B=", B, " m/s")
 print("or ", (B / au) * (1e6 * c.year), "au/Myr")
 B = B / au * c.year
 
-# Bump params
-alpha0 = 1e-3
-
 time = np.linspace(0, 10e6, 1000)
-# f = np.linspace(0, 3, 1000)
 f = 1
 a = 1e-3
-ax.plot(time/1e6,  (a * B * time * f), '-', label=r"$\alpha = 10^{-3}$")
-# a = 3e-4
-# ax.plot(f,  (r_i - a * B * time * f)/au, '-.', label=r"$\alpha = 3 \times 10^{-4}$")
+ax.plot(time/1e6,  (a * B * time * f), '-', color=colors[0], linewidth=2, label=r"$\alpha = 10^{-3}$")
 a = 1e-4
-ax.plot(time/1e6,  (a * B * time * f), '--', label=r"$\alpha = 10^{-4}$")
+ax.plot(time/1e6,  (a * B * time * f), '-', color=colors[1], linewidth=2, label=r"$\alpha = 10^{-4}$")
 
 # ax.set_title("Final bump distance after 10Myr, " + r"$\alpha$ = " + str(alpha0))
 ax.set_xlabel("Time [Myr]")
 ax.set_ylabel("Distance travelled [au]")
 ax.grid(b=True)
-# ax.plot(np.ones_like(f), np.linspace(0, r_i, 1000), 'r')
-ax.set_ylim(0, 100)
+ax.set_ylim(0, 105)
 ax.set_xlim(0, 10)
 filename = localDir + '/figplots/width_vs_time'
-ax.legend()
+ax.legend(framealpha=1.0)
 plt.savefig(filename+'.png', format='png', bbox_inches='tight', pad_inches=0.05, dpi=300)
 plt.savefig(filename+'.eps', format='eps', bbox_inches='tight', pad_inches=0.05, dpi=300)
 plt.show()
+
+yeet = True
+endtime = 7.3564225445964215
+if yeet:
+    fig, ax = plt.subplots()
+    time = endtime * 1e6
+    f = np.linspace(0, 100, 10000)
+    a = 1e-3
+    ax.plot(f, 90 - (a * B * time * f/100), '-', color=colors[0], linewidth=2, label=r"$\alpha = 10^{-3}$")
+    a = 1e-4
+    ax.plot(f, 90 - (a * B * time * f/100), '-', color=colors[1], linewidth=2, label=r"$\alpha = 10^{-4}$")
+    ax.vlines(10, 10, 100, ls='--', color='pink')
+    ax.vlines(30, 10, 100, ls='--', color='pink')
+    ax.vlines(100, 10, 100, ls='--', color='pink')
+    # ax.set_title("Final bump position after 7.4 Myr")
+    ax.legend(framealpha=1.0)
+    ax.set_xlabel(r"Bump velocity $f$ as $\%$ of nominal")
+    ax.set_ylabel("Peak position [au]")
+    ax.set_title("Theoretical bump position after 7.4 Myr", fontdict={'fontsize': fontsize})
+    ax.grid(b=True)
+    ax.set_ylim(10, 100)
+    ax.set_xlim(0, 100)
+    plt.savefig(filename + 'v2.png', bbox_inches='tight', pad_inches=0.05, dpi=300)
+    plt.show()
+

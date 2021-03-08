@@ -14,7 +14,7 @@ from os import path, getcwd
 from matplotlib.ticker import ScalarFormatter
 from plottingFunctions import *
 from dustpy import hdf5writer as w
-
+from matplotlib.cm import get_cmap
 # Global settings
 M_earth = 5.9722e24 * 1e3  # [g]
 
@@ -26,7 +26,7 @@ width_inches = 6 # inches
 golden_ratio = 3/4
 height_inches = golden_ratio * width_inches
 fontsize = 14
-
+sdr_colors = [i for i in get_cmap('tab20').colors]
 
 def main(args):
 
@@ -54,6 +54,15 @@ def main(args):
     SigmaPlan = w.read.sequence('planetesimals.Sigma')
     SigmaPlanTot = np.sum(SigmaPlan, axis=-1)
     PlanMass = w.read.sequence('planetesimals.M') / M_earth
+    rho_gas = w.read.sequence('gas.rho')
+    rho_dust = w.read.sequence('dust.rho').sum(-1)
+    d2g_mid = rho_dust / rho_gas
+
+
+    b = (R[-1, np.argmax(SigmaPlan[-1])])
+    a = (R[-1, np.argmax(SigmaPlan[30, 59])])
+    print(R[-1])
+    print(a)
 
     # Text plotting
     filename = outputDir + 'sdr/r' + str(z)
@@ -64,24 +73,29 @@ def main(args):
 
     # Plot the surface density of dust and gas vs the distance from the star
     fig, ax = plt.subplots()
-    ax.loglog(R[-1, ...], SigmaGas[-1, ...], label="Gas")
-    ax.loglog(R[-1, ...], SigmaDustTot[-1, ...], label="Dust")
-    ax.loglog(R[-1, ...], SigmaPlan[-1, ...], label="Plan")
-    ax.loglog(R[-1, ...], d2g[-1, ...], ls='--', label="d2g")
-    ax.hlines(0.001*np.max(SigmaPlan[-1]), 1e-10, 1e4)
-    ax.hlines(0.01 * np.max(SigmaPlan[-1]), 1e-10, 1e4)
-    ax.set_ylim(1.e-6, 1.e4)
+    ax.loglog(R[-1, ...], SigmaGas[-1, ...], color=sdr_colors[0], label="Gas")
+    ax.loglog(R[-1, ...], SigmaDustTot[-1, ...], color=sdr_colors[2], label="Dust")
+    ax.loglog(R[-1, ...], SigmaPlan[-1, ...], color=sdr_colors[4], label="Plan",)
+    # ax.loglog(R[-1, ...], d2g[-1, ...], color=sdr_colors[-2], ls='--', label="d2g")
+    ax.loglog(R[-1, ...], d2g_mid[-1, ...], color=sdr_colors[6+8], ls='-.', label=r"$\rho_d/\rho_g$", linewidth=1.2)
+    # ax.hlines(10e-3*np.max(SigmaPlan[-1]), 1e-10, 1e4)
+    # ax.hlines(10e-4 * np.max(SigmaPlan[-1]), 1e-10, 1e4)
+    ax.vlines(19.6, 1e-10, 1e4)
+    ax.vlines(31, 1e-10, 1e4)
+    ax.vlines(50, 1e-10, 1e4)
+    ax.set_ylim(1.e-5, 1.e2)
     xmin = 12
     xmax = 200
     ax.set_xlim(xmin, xmax)
     ax.set_xlabel("Distance from star [au]")
     ax.set_ylabel("Surface density [g/cm²]")
+    ax.legend()
 
     if args.title:
         ax.set_title(titlestr, fontdict={'fontsize': fontsize})
         filename += '_titled'
     if args.text:
-        ax.text(0.04, 0.85, textstr, transform=ax.transAxes)
+        ax.text(0.04, 0.9, textstr, transform=ax.transAxes)
     ax.xaxis.set_minor_formatter(ScalarFormatter())
     ax.xaxis.set_minor_formatter(("%.0f"))
     for axis in [ax.xaxis]:
