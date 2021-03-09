@@ -62,7 +62,8 @@ def main(args):
     rho_dust = w.read.sequence('dust.rho').sum(-1)
     d2g_mid = rho_dust / rho_gas
     DustVRad = w.read.sequence('dust.v.rad')
-    # DustVRad = w.read.sequence('dust.v.rad').sum(-1)
+    OmegaK = w.read.sequence('grid.OmegaK')
+    St = w.read.sequence('dust.St')
 
     # Text plotting
     RingDustTot = SigmaDustTot.copy()
@@ -84,7 +85,7 @@ def main(args):
     dist = np.zeros(Nt)
     r_peak = np.zeros(Nt)
     M_flux = np.zeros(Nt)
-    speed = np.zeros(Nt)
+    M_plan = np.zeros(Nt)
     imax = 141
     for i in range(Nt):
         igap = np.argmin(SigmaGas[i, 0:iguess + 10])
@@ -100,26 +101,34 @@ def main(args):
         d2g_mid_at_peak[i] = d2g_mid[i, ipeak]
         if ipeak != igap:
             RingDiskMass[i] = getRingMass(RingDustTot[i], istart, iend, w)
-        # M_flux = 2pi r(t) * Sum_i (  Sigma_dust(r(t), size_i) * vrad_dust(r(t), size_i) )
+
+        # Calculate plan formation at each epoch
+        switch = 0.5 * (1. + np.tanh((np.log10(d2g_mid_at_peak[i])) / 0.03))
+
+        # Calculate inward planetesimal mass flux at each epoch
         iflux = ipeak + (ipeak-igap)
         flux = np.zeros(imax)
+        ret = np.zeros(imax)
         for im in range(imax):
             flux[im] = SigmaDust[i, iflux, im] * DustVRad[i, iflux, im]
+            ret[im] = 0.1 * SigmaDust[i, ipeak, im] * St[i, ipeak, im] * OmegaK[i, ipeak] * switch
         total_flux = flux.sum()
+        dr = rInt[i, ipeak+1] - rInt[i, ipeak]
+        M_plan[i] = 2 * c.pi * R[i, ipeak] * c.au * dr * ret.sum() / M_earth * c.year
         M_flux[i] = -2 * c.pi * R[i, iflux] * c.au * np.sum(flux) / M_earth * c.year
-        # print(t[i] * 1e-6, igap, iend, RingDiskMass[i])
 
-    print(M_flux)
 
     textstr = getText(PlanDiskMassEarth[-1], center, width, frac, initialExtDust=initialRightDustMass)
     titlestr = getTitle(z, w)
-    ax.loglog(t, M_flux)
+    ax.loglog(t, M_plan, label="Mplan")
+    ax.loglog(t, M_flux, label="Mflux")
     # ax.loglog(t, GasDiskMassEarth, label="Gas", color="C0")
     # ax.loglog(t, DustDiskMassEarth, label="Dust", color="C1")
     # ax.loglog(t, RingDiskMass, ls='--', label="Ring Dust", color="C4")
     # ax.loglog(t, PlanDiskMassEarth, label="Planetesimals", color="C2")
     ax.set_xlim(1e5, 1e7)
-    # ax.set_ylim(1e0, 1e6)
+    ax.legend()
+    ax.set_ylim(1e-9, 1e-3)
 
     # ax.legend(loc='upper right')
 
