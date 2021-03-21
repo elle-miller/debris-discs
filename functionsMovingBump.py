@@ -1,3 +1,9 @@
+"""
+Creating Wide Planetesimal Belts
+
+Authors: Elle Miller & Sebastian Marino (2021)
+"""
+
 import numpy as np
 from numpy import log, exp
 from dustpy.std.gas import Hp

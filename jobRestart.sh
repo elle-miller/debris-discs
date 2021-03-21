@@ -12,4 +12,4 @@ source activate dustpy2
 # $5 - Position
 export OMP_NUM_THREADS=4
 
-srun python ./restart.py -z "$1" -b "$2" -v "$3" -p "$4"
+srun python ./restart.py -z "$1"

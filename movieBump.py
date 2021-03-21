@@ -23,7 +23,7 @@ height_inches = golden_ratio * width_inches
 fontsize = 14
 
 
-def movieBump(z, dataDir, dir, sd=True, fps=35, still=None):
+def movieBump(z, dataDir, dir, sd=True, fps=60, still=None):
     """
     Create a movie of the dustpy files residing in the directory `dir`.
 
@@ -258,10 +258,10 @@ def movieBump(z, dataDir, dir, sd=True, fps=35, still=None):
             # fig.tight_layout()
 
             if sd is True:
-                ymin = 1e-4
+                ymin = 1e-8 # 1e-4
                 ymax = 1e3
                 ax0.set_ylim(ymin, ymax)
-                ax0.set_xlim(10, 120)
+                ax0.set_xlim(10, 400)
                 ax0.set_ylabel("Surface density [g/cm²]")
                 ax0.loglog(R[it, ...], SigmaDustTot[it, ...], label="Dust")
                 ax0.loglog(R[it, ...], SigmaGas[it, ...], label="Gas")
@@ -319,8 +319,8 @@ def movieBump(z, dataDir, dir, sd=True, fps=35, still=None):
             plt.cla()
             plt.clf()
 
-        # create movie
-        ret = subprocess.call(['ffmpeg', '-i', os.path.join(tempdir, 'img_%03d.png'), '-vf', "setpts=8*PTS", '-c:v', 'libx264',
+        # create movie '-vf', "setpts=8*PTS",
+        ret = subprocess.call(['ffmpeg', '-i', os.path.join(tempdir, 'img_%03d.png'),  '-c:v', 'libx264',
                                '-crf', '15', '-maxrate', '400k', '-pix_fmt', 'yuv420p', '-r', str(fps),
                                '-bufsize', '1835k', '-t', '00:00:10', moviename + '.mp4'])
         shutil.rmtree(tempdir, ignore_errors=True)

@@ -34,7 +34,7 @@ plt.rcParams["figure.figsize"] = width_inches, height_inches
 # Read all data in the directory
 fig, ax = plt.subplots(3, 1, sharex=True, sharey=True, figsize=(width_inches, 2.5*height_inches))
 
-plot3 = False
+plot3 = True
 if plot3:
     firstendring = 116
     dir = [206, 207, 208]
@@ -72,8 +72,8 @@ for z in dir:
     titlestr = r'$f = {p}\%$'.format(p=position)
 
     # Plot the surface density of dust and gas vs the distance from the star
-    ax[i].loglog(R[-1, ...], SigmaGas[-1, ...], color=sdr_colors[0], label="Gas")
-    ax[i].loglog(R[-1, ...], SigmaDustTot[-1, ...], color=sdr_colors[2], label="Dust")
+    ax[i].loglog(R[-1, ...], SigmaGas[-1, ...], color=sdr_colors[2], label="Gas")
+    ax[i].loglog(R[-1, ...], SigmaDustTot[-1, ...], color=sdr_colors[0], label="Dust")
     ax[i].loglog(R[-1, ...], SigmaPlan[-1, ...], color=sdr_colors[4], label="Planetesimals", )
     ax[i].loglog(R[-1, ...], d2g_mid[-1, ...], color=sdr_colors[14], ls='-.', label=r"$\rho_d/\rho_g$", linewidth=1.2)
     ymax = 0.5e2
@@ -99,5 +99,5 @@ fig.text(0.01, 0.5, 'Surface density [g/cm²]', ha='center', va='center', rotati
 e = getEPS(filename)
 p = getPNG(filename)
 plt.savefig(p["filename"], dpi=300, bbox_inches=p["bbox"], pad_inches=0.05)
-#plt.savefig(e["filename"], dpi=300, bbox_inches=e["bbox"], pad_inches=e["pad"])
+plt.savefig(e["filename"], dpi=300, bbox_inches=e["bbox"], pad_inches=e["pad"])
 plt.show()

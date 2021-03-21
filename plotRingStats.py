@@ -16,6 +16,7 @@ from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.colorbar import ColorbarBase
 import matplotlib.colors as mplc
 from matplotlib.cm import get_cmap
+from matplotlib.legend_handler import HandlerLine2D
 # Global settings
 M_earth = 5.9722e24 * 1e3  # [g]
 
@@ -28,14 +29,14 @@ width_inches = 6  # inches
 golden_ratio = 3/4
 height_inches = golden_ratio * width_inches
 fontsize = 14
-msize = 10
+msize = 8
 
 # Overlay seaborn's styling with personal adjustments
 plt.style.use('seaborn-paper')
 plt.style.use('tex')
 # plt.rcParams["figure.figsize"] = width_inches, height_inches
 a3col = 'darkmagenta'
-a4col = 'orchid'
+a4col = 'plum'
 a3label = r"$\alpha = 10^{-3}$"
 a4label = r"$\alpha = 10^{-4}$"
 a3m = 'd'
@@ -43,7 +44,7 @@ a4m = '*'
 
 # Center, ring width and fractional width data for moving bump
 floor = 0
-velocity = [10, 30, 100]
+velocity = [0, 10, 30, 100]
 
 # Ring start and end information for moving bump
 # 10 MYR
@@ -56,8 +57,8 @@ velocity = [10, 30, 100]
 # distLeft = 1e-3*B*timeLeft
 # s310[2] -= distLeft
 
-dirs3 = np.array([206, 207, 208])
-dirs4 = np.array([214, 215, 216])
+dirs3 = np.array([189, 206, 207, 208])
+dirs4 = np.array([198, 214, 215, 216])
 s310 = np.zeros_like(dirs3, dtype=float)
 e310 = np.zeros_like(dirs3, dtype=float)
 w310 = np.zeros_like(dirs3, dtype=float)
@@ -132,12 +133,12 @@ plotPositions3 = False
 if plotPositions3:
 
     fig, ax = plt.subplots()
-    ax.plot(velocity, s310, markersize=msize, marker='*', ls='--', color="C0", label=r"$\alpha_0$ = 1e-3")
-    ax.plot(velocity, e310, markersize=msize, marker='*', ls='--', color="C0")
-    ax.plot(velocity, s410, markersize=msize, marker='.', ls='-.', color="C3", label=r"$\alpha_0$ = 1e-4")
-    ax.plot(velocity, e410, markersize=msize, marker='.', ls='-.', color="C3")
+    ax.plot(velocity, c310, markersize=msize, marker='*', ls='--', color="C0", label=r"$\alpha_0$ = 1e-3")
+    #ax.plot(velocity, e310, markersize=msize, marker='*', ls='--', color="C0")
+    ax.plot(velocity, c410, markersize=msize, marker='.', ls='-.', color="C3", label=r"$\alpha_0$ = 1e-4")
+    #ax.plot(velocity, e410, markersize=msize, marker='.', ls='-.', color="C3")
     ax.set_xlabel("Bump velocity as \% of nominal", fontsize=fontsize)
-    ax.set_ylabel("Final ring location [au]", fontsize=fontsize)
+    ax.set_ylabel("Final center position location [au]", fontsize=fontsize)
     ax.legend(fontsize=fontsize, loc='lower left')
     ax.set_ylim(0, 140)
     ax.set_title("A = 10 bump at 90 au evolved for 10 Myr", fontsize=fontsize)
@@ -151,11 +152,11 @@ if plotPositionTime:
     alpha3 = True
     if alpha3:
         dirs = [208, 207, 206]
-        filename = 'ringevolution4.png'
+        filename = 'ringevolution4_new'
         ymin = 15
     else:
         dirs = [216, 215, 214]
-        filename = 'ringevolution3.png'
+        filename = 'ringevolution3_new'
         ymin = 70
     f_vals = np.array([100, 30, 10])
     f = [r"$f = 10\%$", r"$f = 30\%$", r"$f = 100\%$"]
@@ -207,18 +208,23 @@ if plotPositionTime:
     sm = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
     cbar = plt.colorbar(sm, ticks=c1, pad=.02)
     cbar.set_ticklabels([r"$100\%$", r"$30\%$", r"$10\%$"])
-    cbar.ax.set_ylabel(r"Bump velocity $f$")
+    # cbar.ax.set_ylabel(r"Bump velocity $f$")
     cbar.ax.tick_params(which='both', size=0)
+    fig.text(0.8, 0.05, r'$f$', ha='center', va='center', rotation=0, fontsize=fontsize)
 
-    ax.plot(t, np.zeros_like(rgap), ls='--', color='lightgray', label='Bump position', linewidth=1.5)
+    ax.plot(t, np.zeros_like(rgap), ls='--', color='lightgray', label='Gap position', linewidth=1.5)
     ax.legend(fontsize=fontsize, loc='lower left')
 
     ax.set_xlim(3, 7.35)
     ax.set_xlabel("Time [Myr]", fontsize=fontsize)
     ax.set_ylabel("Belt position [au]", fontsize=fontsize)
-    ax.set_ylim(ymin, 125)
+    ax.set_ylim(ymin, 120)
     # ax.set_title(titlestr, fontdict={'fontsize': fontsize})
-    plt.savefig(outputDir + filename, dpi=300, bbox_inches="tight", pad_inches=0.05)
+    e = getEPS(filename)
+    p = getPNG(filename)
+    plt.savefig(filename + '.png', dpi=300, bbox_inches=p["bbox"], pad_inches=0.05)
+    plt.savefig(filename + '.eps', dpi=300, bbox_inches=e["bbox"], pad_inches=e["pad"])
+    #plt.savefig(outputDir + filename, dpi=300, bbox_inches="tight", pad_inches=0.05)
     plt.show()
     exit(0)
 
@@ -229,26 +235,25 @@ if yeet:
     fig, (ax1, ax3) = plt.subplots(2, 1, sharex=True, figsize=(6, 7))
 
     plt.subplots_adjust(hspace=0.1)
-    ax1.set_ylabel("Belt position [au]", fontsize=fontsize)
-    size=0.9
-    velocity = [10, 30, 100]
-    ax1.plot(velocity, s310, markersize=msize, marker=a3m, ls='--', color=a3col, label=a3label, linewidth=size)
-    ax1.plot(velocity, e310, markersize=msize, marker=a3m, ls='--', color=a3col, linewidth=size)
-    ax1.plot(velocity, s410, markersize=msize, marker=a4m, ls='--', color=a4col, label=a4label, linewidth=size)
-    ax1.plot(velocity, e410, markersize=msize, marker=a4m, ls='--', color=a4col, linewidth=size)
+    ax1.set_ylabel("Final value [au]", fontsize=fontsize)
+    size = 0.9
+    velocity = [0, 10, 30, 100]
+    ax1.plot(velocity, c310, markersize=msize, marker=a3m, ls='--', mfc=a3col, color='black', label='Center', linewidth=size)
+    ax1.plot(velocity, c410, markersize=msize, marker='o', mfc=a4col, ls='--', color='black', linewidth=size)
+    ax1.plot(velocity, w310, markersize=msize, marker=a3m, mfc=a3col, ls='-.', color='black', label='Width', linewidth=size)
+    ax1.plot(velocity, w410, markersize=msize, marker='o', mfc=a4col, ls='-.', color='black', linewidth=size)
     ax1.tick_params(axis='both', which='both', top='on', bottom='on', right='on')
-    ax1.legend(loc='lower left')
-
-    ax3.set_xlabel("Bump velocity $f$ as \% of nominal", fontsize=fontsize)
+    ax1.legend(markerscale=0.01)
+    ax3.set_xlabel("Gap velocity $f$ as \% of nominal", fontsize=fontsize)
     ax3.set_ylabel("Fractional width", fontsize=fontsize)
-    ax3.plot(velocity, f310, markersize=msize, marker=a3m, ls='--', color=a3col, label=a3label, linewidth=size)
-    ax3.plot(velocity, f410, markersize=msize, marker=a4m, ls='--', color=a4col, label=a4label, linewidth=size)
+    ax3.plot(velocity, f310, markersize=msize, marker=a3m, ls='-', mfc=a3col, color='black', label=a3label, linewidth=size)
+    ax3.plot(velocity, f410, markersize=msize, marker='o', ls='-', mfc=a4col, color='black', label=a4label, linewidth=size)
     ax3.tick_params(axis='both', which='both', top='on', bottom='on', right='on')
+    ax3.legend(loc='upper left')
 
-
-    filename = localDir + '/figplots/ringstats10Myr'
+    filename = localDir + '/figplots/ringstats10Myr_both'
     e = getEPS(filename)
     p = getPNG(filename)
     plt.savefig(filename + '.png', dpi=300, bbox_inches=p["bbox"], pad_inches=0.05)
-    # plt.savefig(e["filename"], dpi=300, bbox_inches=e["bbox"], pad_inches=e["pad"])
+    plt.savefig(e["filename"], dpi=300, bbox_inches=e["bbox"], pad_inches=e["pad"])
     plt.show()

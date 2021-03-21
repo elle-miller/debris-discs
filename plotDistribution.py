@@ -41,9 +41,10 @@ def main(args):
 
     t = w.read.sequence('t') / c.year
     tMyrEnd = t[-1] * 1e-6
+    print(t[-3] * 1e-6)
     Nt = t.shape[0]
 
-    data = w.read.output(Nt - 1)
+    data = w.read.output(Nt - 3)
     filename = "data"
     extension = "hdf5"
     PlanMassEarth = data.planetesimals.M[-1] / M_earth
@@ -103,6 +104,8 @@ def main(args):
     fig, ax = plt.subplots()
     filename = outputDir + 'dist/d' + str(args.z)
     if args.title:
+        titlestr = r"$v_{\rm f}$=1m/s, $\delta_{\rm r,z} = 10^{-3}$, $\delta_{\rm t} = 10^{-5}$ @ only 4.6/10 Myr"
+
         ax.set_title(titlestr, fontdict={'fontsize': fontsize})
         filename += '_titled'
     if args.text:
