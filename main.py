@@ -1,14 +1,19 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-###############################################################################
-# main.py
-# Author: Elle Miller
-# Main file for program to evolve a protoplanetary disc under initial conditions
-# To run:
-# python main.py -flag1 val1 -flag2 val2 etc.
-# Example script with dust evolution turned off
-# python main.py -e 1e4 -n 5 -3 1 -2 0
+"""
+Creating Wide Planetesimal Belts
+
+Authors: Elle Miller & Sebastian Marino (2021)
+
+Main file for program to evolve a protoplanetary disc under initial conditions.
+
+To run:
+python main.py -flag1 val1 -flag2 val2 etc.
+
+Example script with for prime case (alpha=1e-3, A=10, v=100%, pos=90au)
+python main.py -n 31 -a 1e-3 -b 10 -v 1 -p 90
+"""
 
 try:
     from dustpy.simulation import Simulation
@@ -103,7 +108,8 @@ def setInitConds(s, args, verbose):
     # Dust
     s.ini.dust.vfrag = args.vfrag
     s.ini.dust.allowDriftingParticles = True
-    s.ini.dust.aIniMax = 1.0
+    s.ini.dust.d2gRatio = args.d2g
+    # s.ini.dust.aIniMax = 1.0  # Set for disabled coagulation test
 
     # Bump
     s.addgroup("bump", description="Bump quantities")
@@ -113,6 +119,7 @@ def setInitConds(s, args, verbose):
     s.bump.addfield("currentPeakPos", args.iniBumpPeakPos * c.au)
     s.bump.addfield("f", args.bumpVelFactor)
     s.bump.addfield("timeStartMoving", args.timeStartMoving * c.year)
+    s.bump.addfield("zeta", args.zeta)
     if not args.invertBump:
         s.bump.addfield("invert", 1)
     else:
@@ -192,26 +199,34 @@ def setSimulationParams(s, args):
 
     # Simulation settings
     s.t.snapshots = np.logspace(args.minyear, args.maxyear, num=args.nsnap) * c.year
+    snapshot = np.array([7.3564225445964215, 7.9])
+    s.t.snapshots = snapshot * 1e6 * c.year
     print('snapshots=', s.t.snapshots / c.year * 1e-6)
 
     # Update the mixing params to match alpha (these used to be in "ini")
-
-    s.dust.deltaTurb = args.deltaTFactor * args.alpha  # relative velocitiy turbulence
-    s.dust.deltaRad = args.deltaRZFactor * args.alpha  # radial particle diffusion
-    s.dust.deltaVert = args.deltaRZFactor * args.alpha  # vertical diffusion
-    print("deltaRad/Vert = ", s.dust.deltaVert, ", deltaTurb = ", s.dust.deltaTurb)
+    s.dust.delta.turb = args.deltaTFactor * args.alpha  # relative velocitiy turbulence
+    s.dust.delta.rad = args.deltaRZFactor * args.alpha  # radial particle diffusion
+    s.dust.delta.vert = args.deltaRZFactor * args.alpha  # vertical diffusion
+    # print("deltaRad/Vert = ", repr(s.dust.delta.vert), ", deltaTurb = ", repr(s.dust.delta.turb))
 
     # Make the simulation shorter and smaller if not evolving gas or dust
     if not args.gasEvolution:
         del (s.integrator.instructions[1])
 
-    s.dust.p.stick = 0.
-    s.dust.p.frag = 0.
-    s.dust.p.updater = None
-    s.dust.p.updater = None
-    s.dust.v.rel.updater = None
-    s.dust.v.frag.updater = None
-    s.dust.kernel.updater = None
+    # Turn off Hydrodynamics
+    # s.dust.v.rad = 0.
+    # s.dust.v.rad.updater = None
+    # s.dust.D = 0.
+    # s.dust.D.updater = None
+
+    # Turn off Coagulation
+    # s.dust.p.stick = 0.
+    # s.dust.p.frag = 0.
+    # s.dust.p.updater = None
+    # s.dust.p.updater = None
+    # s.dust.v.rel.updater = None
+    # s.dust.v.frag.updater = None
+    # s.dust.kernel.updater = None
     if not args.dustEvolution:
         # Turn off all dust evolution
         s.dust.S.tot = 0.
@@ -240,8 +255,8 @@ def setSimulationParams(s, args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-z', action="store", dest="outputDirNo", type=int, default=1, help="Simulation number")
-    parser.add_argument('-s', action="store", dest="minyear", type=float, default=5, help="Beginning year 10^x")
-    parser.add_argument('-e', action="store", dest="maxyear", type=float, default=7, help="Ending year 10^x")
+    parser.add_argument('-s', action="store", dest="minyear", type=float, default=6, help="Beginning year 10^x")
+    parser.add_argument('-e', action="store", dest="maxyear", type=float, default=6.87, help="Ending year 10^x")
     parser.add_argument('-n', action="store", dest="nsnap", type=int, default=31, help="Number of snapshots")
     parser.add_argument('-r', action="store", dest="Nr", type=int, default=200, help="Number of radial bins")
     parser.add_argument('-a', action="store", dest="alpha", type=float, default=0.001, help="Viscosity parameter")
@@ -257,6 +272,8 @@ if __name__ == "__main__":
     parser.add_argument('-2', action="store", dest="dustEvolution", type=int, default=1, help="Advect/diffus transport")
     parser.add_argument('-3', action="store", dest="panel", type=int, default=0, help="Plot panel output")
     parser.add_argument('-4', action="store", dest="planForm", type=int, default="1", help="Planetesimal formation")
+    parser.add_argument('-5', action="store", dest="d2g", type=float, default="0.01", help="Planetesimal formation")
+    parser.add_argument('-6', action="store", dest="zeta", type=float, default="0.1", help="Planetesimal formation")
     parser.add_argument('-i', action="store", dest="invertBump", type=int, default="0", help="Enter 1 to invert")
     arguments = parser.parse_args()
     main(arguments)

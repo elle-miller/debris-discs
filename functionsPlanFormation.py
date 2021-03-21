@@ -1,10 +1,14 @@
+"""
+Creating Wide Planetesimal Belts
+
+Author: Elle Miller & Sebastian Marino (2021)
+"""
+
 import dustpy.std.sim as std_sim
 import numpy as np
 import time
 import matplotlib.pyplot as plt
 
-
-##################### OTHER FUNCTIONS #########################################
 
 def M_plan(s):
     return (np.pi * (s.grid.ri[1:]**2 - s.grid.ri[:-1]**2) * s.planetesimals.Sigma[:]).sum()
@@ -13,7 +17,7 @@ def M_plan(s):
 def S_ext(s):
 
     # Planetesimal formation efficiency
-    zeta = 0.1
+    zeta = s.bump.zeta
 
     # Midplane dust-to-gas ratio
     d2g_mid = s.dust.rho.sum(-1) / s.gas.rho
@@ -26,10 +30,13 @@ def S_ext(s):
     # New hyperbolic tangent way
     switch = 0.5 * (1. + np.tanh((np.log10(d2g_mid)) / 0.03))
     ret = -zeta * s.dust.Sigma * s.dust.St * s.grid.OmegaK[:, None] * switch[:, None]
+    ret = np.ones_like(ret)
 
-    # Set to zero at boundaries
+    # Set to zero at boundaries - ret is Nr x Nm
     ret[0, :] = 0.
-    ret[-5, :] = 0.
+    n = 50
+    for i in range(1, 50):
+        ret[-i, :] = 0.
 
     return ret
 

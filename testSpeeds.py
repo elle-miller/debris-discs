@@ -5,6 +5,9 @@ from dustpy.std.dust import MRN_distribution
 import numpy as np
 from dustpy.std.gas import Hp
 from matplotlib import pyplot as plt
+from dustpy import hdf5writer as w
+from plottingFunctions import *
+
 localDir = '/media/elle/Seagate Backup Plus Drive/2020/mpia/debris-discs'
 
 # Using seaborn's style
@@ -18,7 +21,7 @@ plt.style.use('tex')
 plt.rcParams["figure.figsize"] = width_inches, height_inches
 fig, ax = plt.subplots()
 
-colors = ["darkmagenta", "orchid"]
+colors = ["darkmagenta", "plum"]
 
 # constants
 au = 1.495978707e11
@@ -26,19 +29,28 @@ k = 1.380649e-23
 mu = 2.3
 mp = 1.67262192369e-27
 G = 6.6743e-11
-M = 1.988409870698051e30  # kg
+M = 1.988409870698051e30  # g
 R = 1391400000  # stellar radius (m)
 T = 5772
 phi = 0.05
 B = (1.5 * k * T)/(mu * mp) * (R * np.sqrt(phi)/(G * M))**0.5
 print("B=", B, " m/s")
-print("or ", (B / au) * (1e6 * c.year), "au/Myr")
 B = B / au * c.year
+print("or {B:.2e} au/Myr".format(B=B * 1e6))
+B = 10 ** 4 / 1e6
+exit(0)
+z = 208
+print("Sim #", z)
+w.datadir = getDataDir(z)
+outputDir = localDir + '/simplots/'
+t = w.read.sequence('t') / c.year
+r_star = w.read.sequence('star.R')
 
 time = np.linspace(0, 10e6, 1000)
 f = 1
 a = 1e-3
-ax.plot(time/1e6,  (a * B * time * f), '-', color=colors[0], linewidth=2, label=r"$\alpha = 10^{-3}$")
+ax.plot(time/1e6,  (a * B * time * f), '-', color=colors[0], linewidth=1.8, label=r"$\alpha = 10^{-3}$")
+
 a = 1e-4
 ax.plot(time/1e6,  (a * B * time * f), '-', color=colors[1], linewidth=2, label=r"$\alpha = 10^{-4}$")
 
@@ -46,7 +58,7 @@ ax.plot(time/1e6,  (a * B * time * f), '-', color=colors[1], linewidth=2, label=
 ax.set_xlabel("Time [Myr]")
 ax.set_ylabel("Distance travelled [au]")
 ax.grid(b=True)
-ax.set_ylim(0, 105)
+ax.set_ylim(0, 100)
 ax.set_xlim(0, 10)
 filename = localDir + '/figplots/width_vs_time'
 ax.legend(framealpha=1.0)

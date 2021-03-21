@@ -58,16 +58,15 @@ def main(args):
     rho_dust = w.read.sequence('dust.rho').sum(-1)
     d2g_mid = rho_dust / rho_gas
 
-
-    b = (R[-1, np.argmax(SigmaPlan[-1])])
-    a = (R[-1, np.argmax(SigmaPlan[30, 59])])
-    print(R[-1])
-    print(a)
+    # b = (R[-1, np.argmax(SigmaPlan[-1])])
+    # a = (R[-1, np.argmax(SigmaPlan[30, 59])])
 
     # Text plotting
     filename = outputDir + 'sdr/r' + str(z)
     center, width, frac, istart, iend = getRingStats(SigmaPlan[-1], w)
     print("Width = ", width, ", center = ", center, ", Frac = ", frac)
+    av_plan_sd = np.mean(SigmaPlan[-1, istart:iend])
+    print("Average plan SD = ", av_plan_sd)
     textstr = getText(PlanMass[-1], center, width, frac)
     titlestr = getTitle(z, w)
 
@@ -75,21 +74,24 @@ def main(args):
     fig, ax = plt.subplots()
     ax.loglog(R[-1, ...], SigmaGas[-1, ...], color=sdr_colors[0], label="Gas")
     ax.loglog(R[-1, ...], SigmaDustTot[-1, ...], color=sdr_colors[2], label="Dust")
-    ax.loglog(R[-1, ...], SigmaPlan[-1, ...], color=sdr_colors[4], label="Plan",)
+    ax.loglog(R[-1, ...], SigmaPlan[-1, ...], color=sdr_colors[4], label="Planetesimals",)
     # ax.loglog(R[-1, ...], d2g[-1, ...], color=sdr_colors[-2], ls='--', label="d2g")
     ax.loglog(R[-1, ...], d2g_mid[-1, ...], color=sdr_colors[6+8], ls='-.', label=r"$\rho_d/\rho_g$", linewidth=1.2)
-    # ax.hlines(10e-3*np.max(SigmaPlan[-1]), 1e-10, 1e4)
-    # ax.hlines(10e-4 * np.max(SigmaPlan[-1]), 1e-10, 1e4)
-    ax.vlines(19.6, 1e-10, 1e4)
-    ax.vlines(31, 1e-10, 1e4)
-    ax.vlines(50, 1e-10, 1e4)
+    # ax.hlines(np.max(SigmaPlan[-1]), 1e-10, 1e4)
+    #ax.hlines(8.5e-2, 1e-10, 1e4, label='8.5')
+    #ax.hlines(av_plan_sd, 1e-10, 1e4, label='av')
+    # ax.vlines(19.6, 1e-10, 1e4)
+    # ax.vlines(31, 1e-10, 1e4)
+    # ax.vlines(50, 1e-10, 1e4)
     ax.set_ylim(1.e-5, 1.e2)
-    xmin = 12
+    xmin = 10
     xmax = 200
+    xmax = 300
     ax.set_xlim(xmin, xmax)
     ax.set_xlabel("Distance from star [au]")
     ax.set_ylabel("Surface density [g/cm²]")
     ax.legend()
+
 
     if args.title:
         ax.set_title(titlestr, fontdict={'fontsize': fontsize})
@@ -100,13 +102,13 @@ def main(args):
     ax.xaxis.set_minor_formatter(("%.0f"))
     for axis in [ax.xaxis]:
         axis.set_major_formatter(ScalarFormatter())
-        ax.set_xticks([30, 60, 90, 120])
+        ax.set_xticks([30, 60, 90, 120, 200])
     # Saving figure
     fig.tight_layout()
     e = getEPS(filename)
     p = getPNG(filename)
     plt.savefig(p["filename"], dpi=300, bbox_inches=p["bbox"], pad_inches=p["pad"])
-    # plt.savefig(e["filename"], dpi=300, bbox_inches=e["bbox"], pad_inches=e["pad"])
+    # plt.savefig(e["filename"], dpi=300) #, bbox_inches=e["bbox"], pad_inches=e["pad"])
     if args.show:
         plt.show()
 

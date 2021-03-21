@@ -11,10 +11,11 @@ import matplotlib.pyplot as plt
 from movieBump import movieBump
 from dustpy.plot import panel
 from os import path, getcwd
-from matplotlib.ticker import ScalarFormatter
+from matplotlib.ticker import ScalarFormatter, LogLocator, NullFormatter
 from plottingFunctions import *
 from dustpy import hdf5writer as w
 from scipy.interpolate import interp1d
+from matplotlib.cm import get_cmap
 
 # Global settings
 M_earth = 5.9722e24 * 1e3  # [g]
@@ -28,6 +29,7 @@ golden_ratio = 3/4
 height_inches = golden_ratio * width_inches
 fontsize = 14
 
+sdr_colors = [i for i in get_cmap('tab20').colors]
 
 def main(args):
 
@@ -42,8 +44,8 @@ def main(args):
     rows = 4
     columns = 3
     if args.sdr_stat | args.mass_stat | args.dist_stat:
-        dirs = [184, 185, 186, 187, 188, 189, 193, 194, 195, 196, 197, 198]
-        dirs = [184, 185, 186, 187, 188, 189, 193, 194, 195, 196, 197, 198]
+        dirs = [184, 184, 186, 187, 188, 189, 193, 194, 195, 196, 197, 198]
+        dirs = [184, 184, 186, 187, 188, 189, 193, 194, 195, 196, 197, 198]
         # dirs = [184, 185, 186, 187, 188, 189, 196, 197, 198]
     else:
         dirs = [202, 203, 204, 206, 207, 208, 210, 211, 212, 214, 215, 216]
@@ -82,10 +84,10 @@ def main(args):
 
                 center, width, frac, istart, iend = getRingStats(SigmaPlan, w)
                 textstr = getText(PlanMass[-1], center, width, frac)
-                ax[r, col].loglog(R, SigmaGas, label="Gas")
-                ax[r, col].loglog(R, SigmaDustTot, label="Dust")
-                ax[r, col].loglog(R, SigmaPlan, label="Planetesimals")
-                ax[r, col].loglog(R, d2g, ls='--', label="d2g Ratio")
+                ax[r, col].loglog(R, SigmaGas, label="Gas", color=sdr_colors[2])
+                ax[r, col].loglog(R, SigmaDustTot, label="Dust", color=sdr_colors[0])
+                ax[r, col].loglog(R, SigmaPlan, label="Planetesimals", color=sdr_colors[14])
+                ax[r, col].loglog(R, d2g, ls='--', label=r"$\rho_d/\rho_g$")
                 if col == (columns - 1) and r == 0:
                     ax[r, col].legend(loc='upper right', frameon=True)
                 ax[r, col].set_ylim(1.e-6, 1.e3)
@@ -149,21 +151,38 @@ def main(args):
                         RingDiskMass[k] = getRingMass(RingDustTot[k], istart, iend, w)
                 center, width, frac, ist, ien = getRingStats(SigmaPlan[-1], w)
                 textstr = getText(PlanDiskMassEarth[-1], center, width, frac, justMass=True, initialExtDust=initialRightDustMass)
-                ax[r, col].loglog(t, GasDiskMassEarth, label="Gas", color="C0")
-                ax[r, col].loglog(t, DustDiskMassEarth, label="Dust", color="C1")
-                ax[r, col].loglog(t, RingDiskMass, ls='--', label="Ring Dust", color="C4")
-                ax[r, col].loglog(t, PlanDiskMassEarth, label="Planetesimals", color="C2")
-                if col == (columns - 1) and r == 0:
-                    ax[r, col].legend(loc='upper right', frameon=True)
                 ax[r, col].set_xlim(1.01e4, 1e7)
-                ax[r, col].set_ylim(1e0, 1e3)
-                ax[r, col].text(0.02, 0.88, textstr, transform=ax[r, col].transAxes)
-                ax[r, col].tick_params(axis='both', which='both')
-                ax2 = ax[r, col].twinx()  # instantiate a second axes that shares the same x-axis
-                color = 'tab:gray'
-                #ax2.set_ylabel('Midplane d2g ratio at peak', color=color, rotation=-90)
-                ax2.loglog(t, d2g_mid_at_peak, '-.', linewidth=0.5, color=color)
-                ax2.tick_params(axis='y', labelcolor=color)
+
+                ax[r, col].minorticks_on()
+                # ax[r, col].set_yticks([1, 10, 100])
+                ax[r, col].set_ylim(1e0, 5e3)
+                lns1 = ax[r, col].loglog(t, GasDiskMassEarth, label="Gas", color=sdr_colors[2])
+                ax2 = ax[r, col].twinx()
+                lns5 = ax2.semilogx(t, d2g_mid_at_peak, '-.', linewidth=0.9, color=sdr_colors[14], zorder=2, label=r"$\rho_d/\rho_g(r_{\rm peak})$")
+                lns2 = ax[r, col].loglog(t, DustDiskMassEarth, label="Dust", color=sdr_colors[0])
+                lns3 = ax[r, col].loglog(t, RingDiskMass, ls='--', label="Ring Dust", color=sdr_colors[1])
+                lns4 = ax[r, col].loglog(t, PlanDiskMassEarth, label="Planetesimals", color=sdr_colors[4])
+                t = ax2.text(0.04, 0.83, textstr, transform=ax[r, col].transAxes, zorder=1000)
+                t.set_bbox(dict(facecolor='white', alpha=0.9, edgecolor='white'))
+                ax2.set_ylim(0, 1)
+                ax2.set_yticks([])
+                ax2.set_yticklabels([])
+
+                # Legend
+                lns = lns2 + lns3 + lns4 + lns5
+                labs = [l.get_label() for l in lns]
+                if col == (columns - 2) and r == 0:
+                    #l = ax2.legend(lns, labs, loc='upper right', frameon=True, framealpha=0.8)
+                    ax2.legend(lns, labs, loc='upper center', bbox_to_anchor=(0.5, 1.5), ncol=4, fancybox=False)
+                    #l.set_zorder(2000000)
+                #
+                # locmaj = LogLocator(base=10, numticks=3)
+                # ax[r, col].yaxis.set_major_locator(locmaj)
+                # locmin = LogLocator(base=10.0, subs=(0.1, 0.2, 0.4, 0.6, 0.8, 1, 2, 4, 6, 8, 10))
+                # ax[r, col].yaxis.set_minor_locator(locmin)
+                # ax[r, col].yaxis.set_minor_formatter(NullFormatter())
+
+
 
             elif args.dist_stat | args.dist_mov:
                 t = w.read.sequence('t') / c.year
@@ -225,19 +244,19 @@ def main(args):
     mid = 0.50
     far = 0.96
     sep = 0.30
-    pos_height = 0.97
+    pos_height = 0.92
     title_height = 0.985
-    plt.subplots_adjust(left=0.05, bottom=0.07, right=0.95, top=0.95, wspace=0, hspace=0)
-    plt.subplots_adjust(left=0.05, bottom=0.07, right=0.93, top=0.95, wspace=0, hspace=0) # d2g
-    d2g = 0.02
+    plt.subplots_adjust(left=0.05, bottom=0.07, right=0.95, top=0.90, wspace=0, hspace=0)
+    #plt.subplots_adjust(left=0.05, bottom=0.07, right=0.93, top=0.95, wspace=0, hspace=0) # d2g
+    d2g = 0
     if args.dist_stat | args.dist_mov:
         mid = mid - 0.09
         sep = sep - 0.05
     # Initial position or velocity information
     if args.sdr_stat | args.mass_stat | args.dist_stat:
-        fig.text(mid - sep, pos_height, r'$r_{\rm p}$ = 30 au', ha='center', va='center', fontsize=fontsize)
-        fig.text(mid, pos_height, r'$r_{\rm p}$ = 60 au', ha='center', va='center', fontsize=fontsize)
-        fig.text(mid + sep, pos_height, r'$r_{\rm p}$ = 90 au', ha='center', va='center', fontsize=fontsize)
+        fig.text(mid - sep, pos_height, r'$r_{\rm g}$ = 30 au', ha='center', va='center', fontsize=fontsize)
+        fig.text(mid, pos_height, r'$r_{\rm g}$ = 60 au', ha='center', va='center', fontsize=fontsize)
+        fig.text(mid + sep, pos_height, r'$r_{\rm g}$ = 90 au', ha='center', va='center', fontsize=fontsize)
         # fig.text(mid, title_height, "Stationary pressure trap evolved for 10 Myr", ha='center', va='center', fontsize=fontsize)
     else:
         fig.text(mid-sep, pos_height, r'$f = 10\%$', ha='center', va='center', fontsize=fontsize)
@@ -245,10 +264,10 @@ def main(args):
         fig.text(mid+sep, pos_height, r'$f = 100\%$', ha='center', va='center', fontsize=fontsize)
         #fig.text(mid, title_height, "Migrating pressure trap initially at 90 au evolved for 10 Myr", ha='center', va='center',
               #   fontsize=fontsize)
-    fig.text(far+d2g, 0.84, 'A = 3', ha='center', va='center', rotation=-90, fontsize=fontsize)
-    fig.text(far+d2g, 0.62, 'A = 10', ha='center', va='center', rotation=-90, fontsize=fontsize)
-    fig.text(far+d2g, 0.39, 'A = 3', ha='center', va='center', rotation=-90, fontsize=fontsize)
-    fig.text(far+d2g, 0.18, 'A = 10', ha='center', va='center', rotation=-90, fontsize=fontsize)
+    fig.text(far+d2g, 0.8, 'A = 3', ha='center', va='center', rotation=-90, fontsize=fontsize)
+    fig.text(far+d2g, 0.58, 'A = 10', ha='center', va='center', rotation=-90, fontsize=fontsize)
+    fig.text(far+d2g, 0.38, 'A = 3', ha='center', va='center', rotation=-90, fontsize=fontsize)
+    fig.text(far+d2g, 0.17, 'A = 10', ha='center', va='center', rotation=-90, fontsize=fontsize)
     fig.text(far+0.02+d2g, 0.29, r'$\alpha = 10^{-4}$', ha='center', va='center', rotation=-90, fontsize=fontsize)
     fig.text(far+0.02+d2g, 0.73, r'$\alpha = 10^{-3}$', ha='center', va='center', rotation=-90, fontsize=fontsize)
     if args.sdr_stat | args.sdr_mov:

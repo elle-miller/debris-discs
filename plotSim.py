@@ -52,14 +52,14 @@ def main(args):
         movieBump(z, w.datadir, outputDir + 'movies/sdr/', sd=True)
         return
     if args.plotDistMovie:
-        movieBump(z, outputDir + 'movies/sdr/', sd=False)
+        movieBump(z, w.datadir, outputDir + 'movies/sdr/', sd=False)
         return
 
     # Time data
     t = w.read.sequence('t') / c.year
     Nt = t.shape[0]
     tMyr = t / 1e6
-    it = -2
+    it = -1
     tMyrEnd = tMyr[it]
     print("tMyrEnd = ", tMyrEnd)
     R = w.read.sequence('grid.r') / c.au

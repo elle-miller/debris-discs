@@ -1,5 +1,7 @@
 def getJobParams(outputDir):
 
+    if outputDir == 263:
+        return [1e-3, 10, 100]
     # wide
     if outputDir == 232 :
         return [1e-3, 10, 90]

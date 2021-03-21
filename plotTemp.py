@@ -25,10 +25,12 @@ s.ini.gas.alpha = 0.001 * np.ones_like(s.grid.r)
 s.initialize()
 
 tstar = s.star.T
-rstar = int(repr(s.star.R))
+rstar = s.star.R
+
 phi = 0.05
-print(tstar, rstar* 1e-5, phi)
-print(tstar * (rstar * phi ** 0.5) ** 0.5)
+#print(tstar, rstar* 1e-5, phi)
+temp = tstar * (rstar * phi ** 0.5) ** 0.5 / np.sqrt(c.au)
+print("{t:.1f}".format(t=temp))
 exit(0)
 
 # Plot temperature profile

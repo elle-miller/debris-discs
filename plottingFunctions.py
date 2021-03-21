@@ -69,27 +69,27 @@ def getTitle(z, writer):
 
 def getText(p, c1, w1, f1, justMass=False, initialExtDust=None):
     ptot = f"{p:.0f}"
-    textstr = r"$\mathcal{M}$ = " + str(ptot) + r" M$_{\oplus}$"
+    textstr = str(ptot) + r" M$_{\oplus}$"
     #textstr = r"$\mathcal{M}$: " + str(ptot) + r" M$_{\oplus}$"
     center = f"{c1:.0f}"
     width = f"{w1:.0f}"
-    frac = f"{f1:.1f}"
+    frac = f"{f1:.2f}"
     if w1 > 0.05 and not justMass:
         #textstr += r", $\Delta r$ = " + width + r" au, $r$ = " + center + r" au, $\Delta r/r$ = " + frac
         textstr += r", $\Delta r$ = " + width + r" au, $\Delta r/r$ = " + frac
         #textstr += r", $\Delta r$: " + width + r" au, $r$: " + center + r" au, $\Delta r/r$: " + frac
     if initialExtDust is not None:
         data = float(p/initialExtDust) * 100
-        converted = f"{data:.0f}"
+        converted = f"{data:.1f}"
         textstr += r" $({per}\%)$".format(per=converted)
     return textstr
 
 
-def getRingStats(SigmaPlan, writer, verbose=True):
+def getRingStats(SigmaPlan, writer, verbose=False):
     """
     :return: center, width & fractional width of a given planetesimal surface density profile
     """
-    rInt = writer.read.sequence('grid.ri') / c.au # Radial grid cell interfaces [cm]
+    rInt = writer.read.sequence('grid.ri') / c.au  # Radial grid cell interfaces [cm]
     R = writer.read.sequence('grid.r') / c.au
 
     # Reset index positions
