@@ -1,5 +1,6 @@
 #!/bin/bash -l
-#SBATCH --job-name=diffpos
+#SBATCH --job-name=higherNr
+#SBATCH --partition=four-wks
 
 module load anaconda3
 module load openmpi-4.0.1
