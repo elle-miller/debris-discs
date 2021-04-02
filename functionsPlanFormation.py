@@ -17,7 +17,7 @@ def M_plan(s):
 def S_ext(s):
 
     # Planetesimal formation efficiency
-    zeta = s.bump.zeta
+    zeta = 0.1
 
     # Midplane dust-to-gas ratio
     d2g_mid = s.dust.rho.sum(-1) / s.gas.rho
@@ -30,14 +30,11 @@ def S_ext(s):
     # New hyperbolic tangent way
     switch = 0.5 * (1. + np.tanh((np.log10(d2g_mid)) / 0.03))
     ret = -zeta * s.dust.Sigma * s.dust.St * s.grid.OmegaK[:, None] * switch[:, None]
-    ret = np.ones_like(ret)
 
     # Set to zero at boundaries - ret is Nr x Nm
     ret[0, :] = 0.
-    n = 50
-    for i in range(1, 50):
-        ret[-i, :] = 0.
-
+    ret[-50:, :] = 0.
+    
     return ret
 
 

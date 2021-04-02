@@ -108,7 +108,7 @@ def setInitConds(s, args, verbose):
     # Dust
     s.ini.dust.vfrag = args.vfrag
     s.ini.dust.allowDriftingParticles = True
-    s.ini.dust.d2gRatio = args.d2g
+   # s.ini.dust.d2gRatio = args.d2g
     # s.ini.dust.aIniMax = 1.0  # Set for disabled coagulation test
 
     # Bump
@@ -119,7 +119,7 @@ def setInitConds(s, args, verbose):
     s.bump.addfield("currentPeakPos", args.iniBumpPeakPos * c.au)
     s.bump.addfield("f", args.bumpVelFactor)
     s.bump.addfield("timeStartMoving", args.timeStartMoving * c.year)
-    s.bump.addfield("zeta", args.zeta)
+    #s.bump.addfield("zeta", args.zeta)
     if not args.invertBump:
         s.bump.addfield("invert", 1)
     else:
@@ -199,14 +199,14 @@ def setSimulationParams(s, args):
 
     # Simulation settings
     s.t.snapshots = np.logspace(args.minyear, args.maxyear, num=args.nsnap) * c.year
-    snapshot = np.array([7.3564225445964215, 7.9])
-    s.t.snapshots = snapshot * 1e6 * c.year
+   # snapshot = np.array([7.3564225445964215, 7.9])
+   # s.t.snapshots = snapshot * 1e6 * c.year
     print('snapshots=', s.t.snapshots / c.year * 1e-6)
 
     # Update the mixing params to match alpha (these used to be in "ini")
-    s.dust.delta.turb = args.deltaTFactor * args.alpha  # relative velocitiy turbulence
-    s.dust.delta.rad = args.deltaRZFactor * args.alpha  # radial particle diffusion
-    s.dust.delta.vert = args.deltaRZFactor * args.alpha  # vertical diffusion
+    s.dust.delta.turb = args.alpha  #args.deltaTFactor * args.alpha  # relative velocitiy turbulence
+    s.dust.delta.rad = args.alpha  #args.deltaRZFactor * args.alpha  # radial particle diffusion
+    s.dust.delta.vert = args.alpha #args.deltaRZFactor * args.alpha  # vertical diffusion
     # print("deltaRad/Vert = ", repr(s.dust.delta.vert), ", deltaTurb = ", repr(s.dust.delta.turb))
 
     # Make the simulation shorter and smaller if not evolving gas or dust
@@ -255,8 +255,8 @@ def setSimulationParams(s, args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-z', action="store", dest="outputDirNo", type=int, default=1, help="Simulation number")
-    parser.add_argument('-s', action="store", dest="minyear", type=float, default=6, help="Beginning year 10^x")
-    parser.add_argument('-e', action="store", dest="maxyear", type=float, default=6.87, help="Ending year 10^x")
+    parser.add_argument('-s', action="store", dest="minyear", type=float, default=5, help="Beginning year 10^x")
+    parser.add_argument('-e', action="store", dest="maxyear", type=float, default=7, help="Ending year 10^x")
     parser.add_argument('-n', action="store", dest="nsnap", type=int, default=31, help="Number of snapshots")
     parser.add_argument('-r', action="store", dest="Nr", type=int, default=200, help="Number of radial bins")
     parser.add_argument('-a', action="store", dest="alpha", type=float, default=0.001, help="Viscosity parameter")
