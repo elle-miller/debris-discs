@@ -14,7 +14,7 @@ from os import path
 
 
 s = Simulation()
-z = 310
+z = pars.z
 
 # PARAMETERS
 

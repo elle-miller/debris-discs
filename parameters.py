@@ -1,5 +1,8 @@
 import dustpy.constants as c
 
+z = 318  # directory
+Nr = 120
+
 # PLANET
 A_gap = 2.3  # Gap depth aplitude
 f_v = 1.  # Migration velocity in units of viscous velocity
@@ -14,10 +17,10 @@ r_ini = 90. * c.au  # Initial distance from star
 # that is refined with 2N+1 fine grid cells centered around the dust ring.
 
 # Number of grid cells on coarse grid
-Nr = 300
+
 # Minimum and maximum grid extent
 rmin = 10. * c.au
-rmax = 1000. * c.au
+rmax = 400. * c.au
 # Factor of refinement
 f_ref = 3
 # Range of refinement
