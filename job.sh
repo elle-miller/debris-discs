@@ -1,6 +1,6 @@
 #!/bin/bash -l
-#SBATCH --job-name=higherNr
-#SBATCH --partition=four-wks
+#SBATCH --job-name=statNt150
+# SBATCH --partition=four-wks
 
 module load anaconda3
 module load openmpi-4.0.1
@@ -15,6 +15,5 @@ source activate dustpy2
 # $6 - Number of snapshots
 # $7 - Radial resolution
 export OMP_NUM_THREADS=4
-
 
 srun python ./main.py -z "$1" -a 1e-"$2" -b "$3" -v "$4" -p "$5" -n "$6" -r "$7"
