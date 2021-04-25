@@ -202,6 +202,7 @@ def main(args):
         fig.text(mid, 0, 'Distance from star [au]', ha='center', va='center', fontsize=fontsize)
         cbarcmap = plt.colorbar(pltcmap, ax=ax, fraction=0.05, aspect=70, pad=0.01)
         cbarcmap.ax.set_ylabel("$\log\ \sigma$ [g/cm²]")
+    plt.savefig(filename + '.pdf', dpi=300, bbox_inches="tight", pad_inches=0.05)
     plt.savefig(filename+'.png', dpi=300, bbox_inches="tight", pad_inches=0.05)
     plt.savefig(filename+'.eps', dpi=300, bbox_inches="tight", pad_inches=0.05)
     plt.show()
