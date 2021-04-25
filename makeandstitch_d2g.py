@@ -21,6 +21,7 @@ from matplotlib.cm import get_cmap
 M_earth = 5.9722e24 * 1e3  # [g]
 
 slurmDir = '/mnt/beegfs/bachelor/scratch/miller/dustpy2/debris-discs'
+slurmDir = '/mnt/beegfs/bachelor/groups/henning/users/miller/debris-discs'
 localDir = getcwd()
 localDirNew = '/media/elle/Seagate Expansion Drive/MPIAResults'
 
@@ -39,13 +40,14 @@ def main(args):
     plt.rcParams["figure.figsize"] = width_inches, height_inches
 
     # Read all data in the directory
-    outputDir = localDir + '/figplots/condensedcollages/'
+    outputDir = localDir + '/figplots/'
 
     rows = 4
     columns = 3
     if args.sdr_stat | args.mass_stat | args.dist_stat:
         dirs = [184, 184, 186, 187, 188, 189, 193, 194, 195, 196, 197, 198]
         dirs = [184, 184, 186, 187, 188, 189, 193, 194, 195, 196, 197, 198]
+        dirs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
         # dirs = [184, 185, 186, 187, 188, 189, 196, 197, 198]
     else:
         dirs = [202, 203, 204, 206, 207, 208, 210, 211, 212, 214, 215, 216]
@@ -64,7 +66,7 @@ def main(args):
         filename = outputDir + 'dist_mov'
     print("Writing...", filename)
     n = columns*rows
-    fig, ax = plt.subplots(rows, columns, sharex=True, sharey=True, figsize=(12, 7))
+    fig, ax = plt.subplots(rows, columns, sharex=True, sharey=True, figsize=(12, 8))
     i = 0
     for r in range(rows):
         for col in range(columns):
@@ -73,31 +75,6 @@ def main(args):
             # Surface density
             if args.sdr_stat | args.sdr_mov:
                 Nt = np.size(w.read.sequence('t'))
-                data = w.read.output(Nt-1)
-                R = data.grid.r / c.au  # Radial grid cell centers [cm]
-                SigmaGas = data.gas.Sigma
-                SigmaDust = data.dust.Sigma  # Nr x Nm
-                SigmaDustTot = np.sum(SigmaDust, axis=1)  # Nr
-                d2g = data.dust.eps
-                SigmaPlan = data.planetesimals.Sigma
-                PlanMass = data.planetesimals.M / M_earth
-
-                center, width, frac, istart, iend = getRingStats(SigmaPlan, w)
-                textstr = getText(PlanMass[-1], center, width, frac)
-                ax[r, col].loglog(R, SigmaGas, label="Gas", color=sdr_colors[2])
-                ax[r, col].loglog(R, SigmaDustTot, label="Dust", color=sdr_colors[0])
-                ax[r, col].loglog(R, SigmaPlan, label="Planetesimals", color=sdr_colors[14])
-                ax[r, col].loglog(R, d2g, ls='--', label=r"$\rho_d/\rho_g$")
-                if col == (columns - 1) and r == 0:
-                    ax[r, col].legend(loc='upper right', frameon=True)
-                ax[r, col].set_ylim(1.e-6, 1.e3)
-                ax[r, col].set_xlim(10, 170)
-                ax[r, col].text(0.04, 0.9, textstr, transform=ax[r, col].transAxes)
-                ax[r, col].xaxis.set_minor_formatter(ScalarFormatter())
-                ax[r, col].xaxis.set_minor_formatter(("%.0f"))
-                for axis in [ax[r, col].xaxis]:
-                    axis.set_major_formatter(ScalarFormatter())
-                    ax[r, col].set_xticks([30, 60, 90, 120])
 
             # Mass plotting
             elif args.mass_stat | args.mass_mov:
@@ -152,18 +129,18 @@ def main(args):
                 center, width, frac, ist, ien = getRingStats(SigmaPlan[-1], w)
                 textstr = getText(PlanDiskMassEarth[-1], center, width, frac, justMass=True, initialExtDust=initialRightDustMass)
                 ax[r, col].set_xlim(1.01e4, 1e7)
-
+                ax[r, col].set_ylim(1e0, 5e2)
                 ax[r, col].minorticks_on()
-                # ax[r, col].set_yticks([1, 10, 100])
-                ax[r, col].set_ylim(1e0, 5e3)
+                ax[r, col].set_yticks([1, 10, 100])
+
                 lns1 = ax[r, col].loglog(t, GasDiskMassEarth, label="Gas", color=sdr_colors[2])
                 ax2 = ax[r, col].twinx()
                 lns5 = ax2.semilogx(t, d2g_mid_at_peak, '-.', linewidth=0.9, color=sdr_colors[14], zorder=2, label=r"$\rho_d/\rho_g(r_{\rm peak})$")
                 lns2 = ax[r, col].loglog(t, DustDiskMassEarth, label="Dust", color=sdr_colors[0])
                 lns3 = ax[r, col].loglog(t, RingDiskMass, ls='--', label="Ring Dust", color=sdr_colors[1])
                 lns4 = ax[r, col].loglog(t, PlanDiskMassEarth, label="Planetesimals", color=sdr_colors[4])
-                t = ax2.text(0.04, 0.83, textstr, transform=ax[r, col].transAxes, zorder=1000)
-                t.set_bbox(dict(facecolor='white', alpha=0.9, edgecolor='white'))
+                t = ax2.text(0.04, 0.07, textstr, transform=ax[r, col].transAxes, zorder=1000)
+                t.set_bbox(dict(facecolor='white', alpha=0.9, edgecolor='white', pad=0.0))
                 ax2.set_ylim(0, 1)
                 ax2.set_yticks([])
                 ax2.set_yticklabels([])
@@ -172,72 +149,15 @@ def main(args):
                 lns = lns2 + lns3 + lns4 + lns5
                 labs = [l.get_label() for l in lns]
                 if col == (columns - 2) and r == 0:
-                    #l = ax2.legend(lns, labs, loc='upper right', frameon=True, framealpha=0.8)
+                    l = ax2.legend(lns, labs, loc='upper right', frameon=True, framealpha=0.8)
                     ax2.legend(lns, labs, loc='upper center', bbox_to_anchor=(0.5, 1.5), ncol=4, fancybox=False)
-                    #l.set_zorder(2000000)
-                #
+                    l.set_zorder(2000000)
+
                 # locmaj = LogLocator(base=10, numticks=3)
                 # ax[r, col].yaxis.set_major_locator(locmaj)
                 # locmin = LogLocator(base=10.0, subs=(0.1, 0.2, 0.4, 0.6, 0.8, 1, 2, 4, 6, 8, 10))
                 # ax[r, col].yaxis.set_minor_locator(locmin)
                 # ax[r, col].yaxis.set_minor_formatter(NullFormatter())
-
-
-
-            elif args.dist_stat | args.dist_mov:
-                t = w.read.sequence('t') / c.year
-                Nt = t.shape[0]
-                data = w.read.output(Nt - 1)
-                PlanMassEarth = data.planetesimals.M[-1] / M_earth
-                m = data.grid.m
-                R = data.grid.r
-                ri = data.grid.ri
-                SigmaD = data.dust.Sigma
-                SigmaG = data.gas.Sigma
-                SigmaPlan = data.planetesimals.Sigma
-                eps = data.dust.eps
-                cs = data.gas.cs
-                delta = data.dust.delta.turb
-                OmegaK = data.grid.OmegaK
-                St = data.dust.St
-                vK = OmegaK * R
-                vFrag = data.dust.v.frag
-                a = np.mean(m[..., 1:] / m[..., :-1], axis=-1)
-                dm = 2. * (a - 1.) / (a + 1.)
-                sigmaD = SigmaD[..., :] / dm
-                b = vFrag ** 2 / (delta * cs ** 2)
-                with np.warnings.catch_warnings():
-                    np.warnings.filterwarnings(
-                        'ignore',
-                        r'invalid value encountered in sqrt')
-                    St_fr = 1 / (2 * b) * (3 - np.sqrt(9 - 4 * b ** 2))
-                p = SigmaG * OmegaK * cs
-                _f = interp1d(np.log10(R), np.log10(p), fill_value='extrapolate')
-                pi = 10. ** _f(np.log10(ri))
-                gamma = np.abs(R / p * np.diff(pi) / np.diff(ri))
-                St_dr = eps / gamma * (vK / cs) ** 2
-                sd_max = np.ceil(np.log10(sigmaD.max()))
-                sg_max = np.ceil(np.log10(SigmaG.max()))
-                center, width, frac, istart, iend = getRingStats(SigmaPlan, w)
-                textstr = getText(PlanMassEarth, center, width, frac, justMass=True)
-                ax[r, col].text(0.04, 0.9, textstr, color="white", transform=ax[r, col].transAxes, fontweight='bold')
-                pltcmap = ax[r, col].contourf(R / c.au, m, np.log10(sigmaD.T), levels=np.linspace(sd_max - 6, sd_max, 7),
-                                      cmap="magma", extend="both")
-                ax[r, col].contour(R / c.au, m, St.T, levels=[1.], colors="white", linewidths=2)
-                ax[r, col].contour(R / c.au, m, (St - St_dr[..., None]).T, levels=[0.], colors="C2", linewidths=1.5)
-                ax[r, col].contour(R / c.au, m, (St - St_fr[..., None]).T, levels=[0.], colors="C0", linewidths=1.5)
-                ax[r, col].axhline(m[-1], color="#AAAAAA", lw=1, ls="--")
-                ax[r, col].axvline(R[-1] / c.au, color="#AAAAAA", lw=1, ls="--")
-                ax[r, col].set_xlim(R[0] / c.au, 300)
-                ax[r, col].set_ylim(m[0], m[-1])
-                ax[r, col].set_xscale("log")
-                ax[r, col].set_yscale("log")
-                ax[r, col].tick_params(axis='x')
-                ax[r, col].tick_params(axis='y')
-                ax[r, col].xaxis.set_minor_formatter(ScalarFormatter())
-                ax[r, col].xaxis.set_major_formatter(ScalarFormatter())
-                ax[r, col].xaxis.set_minor_formatter(("%.0f"))
-                ax[r, col].set_xticks([30, 60, 90, 150])
             i += 1
 
     # Saving figure
@@ -274,7 +194,7 @@ def main(args):
         fig.text(0, 0.5, 'Surface density [g/cm²]', ha='center', va='center', rotation='vertical', fontsize=fontsize)
         fig.text(mid, 0, 'Distance from star [au]', ha='center', va='center', fontsize=fontsize)
     elif args.mass_stat | args.mass_mov:
-        fig.text(0, 0.5, r'Mass [$M_\oplus$]', ha='center', va='center', rotation='vertical', fontsize=fontsize)
+        fig.text(0, 0.5, r'Mass [M$_\oplus$]', ha='center', va='center', rotation='vertical', fontsize=fontsize)
         fig.text(mid, 0, 'Time [yr]', ha='center', va='center', fontsize=fontsize)
     elif args.dist_stat | args.dist_mov:
         plt.subplots_adjust(left=0.055, bottom=0.03, right=0.85, top=0.95, wspace=0, hspace=0.1)
@@ -282,9 +202,8 @@ def main(args):
         fig.text(mid, 0, 'Distance from star [au]', ha='center', va='center', fontsize=fontsize)
         cbarcmap = plt.colorbar(pltcmap, ax=ax, fraction=0.05, aspect=70, pad=0.01)
         cbarcmap.ax.set_ylabel("$\log\ \sigma$ [g/cm²]")
-    p = getPNG(filename)
-    plt.savefig(filename+'.png', dpi=300, bbox_inches=p["bbox"], pad_inches=0.05)
-    plt.savefig(filename+'.eps', dpi=300, bbox_inches=p["bbox"], pad_inches=0.05)
+    plt.savefig(filename+'.png', dpi=300, bbox_inches="tight", pad_inches=0.05)
+    plt.savefig(filename+'.eps', dpi=300, bbox_inches="tight", pad_inches=0.05)
     plt.show()
 
 
