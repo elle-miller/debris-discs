@@ -20,6 +20,7 @@ from plottingFunctions import *
 M_earth = 5.9722e24 * 1e3  # [g]
 
 slurmDir = '/mnt/beegfs/bachelor/scratch/miller/dustpy2/debris-discs'
+slurmDir = '/mnt/beegfs/bachelor/groups/henning/users/miller/debris-discs'
 localDir = getcwd()
 localDirNew = '/media/elle/Seagate Expansion Drive/MPIAResults'
 
@@ -104,55 +105,51 @@ def main(args):
         if ipeak != igap:
             RingDiskMass[i] = getRingMass(RingDustTot[i], istart, iend, w)
 
-        # Calculate plan formation at each epoch
-        switch = 0.5 * (1. + np.tanh((np.log10(d2g_mid_at_peak[i])) / 0.03))
+        # # Calculate plan formation at each epoch
+        # switch = 0.5 * (1. + np.tanh((np.log10(d2g_mid_at_peak[i])) / 0.03))
+        #
+        # # Calculate inward planetesimal mass flux at each epoch
+        # iflux = ipeak + (ipeak-igap)
+        # flux = np.zeros(imax)
+        # ret = np.zeros(imax)
+        # for im in range(imax):
+        #     flux[im] = SigmaDust[i, iflux, im] * DustVRad[i, iflux, im]
+        #     ret[im] = 0.1 * SigmaDust[i, ipeak, im] * St[i, ipeak, im] * OmegaK[i, ipeak] * switch
+        # total_flux = flux.sum()
+        # dr = rInt[i, ipeak+1] - rInt[i, ipeak]
+        # M_plan[i] = 2 * c.pi * R[i, ipeak] * c.au * dr * ret.sum() / M_earth * c.year
+        # M_flux[i] = -2 * c.pi * R[i, iflux] * c.au * np.sum(flux) / M_earth * c.year
 
-        # Calculate inward planetesimal mass flux at each epoch
-        iflux = ipeak + (ipeak-igap)
-        flux = np.zeros(imax)
-        ret = np.zeros(imax)
-        for im in range(imax):
-            flux[im] = SigmaDust[i, iflux, im] * DustVRad[i, iflux, im]
-            ret[im] = 0.1 * SigmaDust[i, ipeak, im] * St[i, ipeak, im] * OmegaK[i, ipeak] * switch
-        total_flux = flux.sum()
-        dr = rInt[i, ipeak+1] - rInt[i, ipeak]
-        M_plan[i] = 2 * c.pi * R[i, ipeak] * c.au * dr * ret.sum() / M_earth * c.year
-        M_flux[i] = -2 * c.pi * R[i, iflux] * c.au * np.sum(flux) / M_earth * c.year
-
-    mean_flux = np.mean(M_flux[-18:])
-    print("Mean M_flux = ", mean_flux)
-    #textstr = getText(PlanDiskMassEarth[-1], center, width, frac, initialExtDust=initialRightDustMass)
-    #titlestr = getTitle(z, w)
-    #ax.loglog(t, d2g_mid_at_peak, label="mid d2g peak")
-    #ax.loglog(t, SigmaDustTotPeak, label="SigmaDust @ peak")
-    ax.loglog(t, M_flux, label="Mflux")
-    ax.hlines(mean_flux, 4e6, t[-1], label="mean ")
-    # ax.loglog(t, GasDiskMassEarth, label="Gas", color="C0")
-    # ax.loglog(t, DustDiskMassEarth, label="Dust", color="C1")
-    # ax.loglog(t, RingDiskMass, ls='--', label="Ring Dust", color="C4")
-    # ax.loglog(t, PlanDiskMassEarth, label="Planetesimals", color="C2")
-    ax.set_xlim(4e6, t[-1])
-    #ax.set_ylim(1e-7, 1e-3)
-    ax.legend()
-    #ax.set_ylim(1e-9, 1e-3)
+    # mean_flux = np.mean(M_flux[-18:])
+    # print("Mean M_flux = ", mean_flux)
+    textstr = getText(PlanDiskMassEarth[-1], center, width, frac, initialExtDust=initialRightDustMass)
+    titlestr = getTitle(z, w)
+    # ax.loglog(t, d2g_mid_at_peak, label="mid d2g peak")
+    # ax.loglog(t, SigmaDustTotPeak, label="SigmaDust @ peak")
+    # ax.loglog(t, M_flux, label="Mflux")
+    # ax.hlines(mean_flux, 4e6, t[-1], label="mean ")
+    ax.loglog(t, GasDiskMassEarth, label="Gas", color="C0")
+    ax.loglog(t, DustDiskMassEarth, label="Dust", color="C1")
+    ax.loglog(t, RingDiskMass, ls='--', label="Ring Dust", color="C4")
+    ax.loglog(t, PlanDiskMassEarth, label="Planetesimals", color="C2")
 
     # ax.legend(loc='upper right')
 
     filename = outputDir + 'mass/m' + str(z)
-    filename = "208mflux"
-    # if args.title:
-    #     ax.set_title(titlestr, fontdict={'fontsize': fontsize})
-    #     filename += '_untitled'
-    # if args.text:
-    #     ax.text(0.04, 0.85, textstr, transform=ax.transAxes)
-    ax.set_xlabel("Time [Myr]")
-    ax.set_ylabel("Mass [M$_\oplus$]/yr")
 
-    # ax2 = ax.twinx()  # instantiate a second axes that shares the same x-axis
-    # color = 'tab:gray'
-    # ax2.set_ylabel('Midplane d2g ratio at peak', color=color, rotation=-90)  # we already handled the x-label with ax1
-    # ax2.loglog(t, d2g_mid_at_peak, '-.', linewidth=0.5, color=color)
-    # ax2.tick_params(axis='y', labelcolor=color)
+    if args.title:
+        ax.set_title(titlestr, fontdict={'fontsize': fontsize})
+        filename += '_untitled'
+    if args.text:
+        ax.text(0.04, 0.85, textstr, transform=ax.transAxes)
+    ax.set_xlabel("Time [Myr]")
+    ax.set_ylabel("Mass [M$_\oplus$]")
+
+    ax2 = ax.twinx()  # instantiate a second axes that shares the same x-axis
+    color = 'tab:gray'
+    ax2.set_ylabel('Midplane d2g ratio at peak', color=color, rotation=-90)  # we already handled the x-label with ax1
+    ax2.loglog(t, d2g_mid_at_peak, '-.', linewidth=0.5, color=color)
+    ax2.tick_params(axis='y', labelcolor=color)
 
     # Saving figure
     fig.tight_layout()
