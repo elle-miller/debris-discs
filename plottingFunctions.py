@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 # Results are spead over two hard drives due to space
 localDir = getcwd()
 localDirNew = '/media/elle/Seagate Expansion Drive/MPIAResults'
+slurmDir = '/mnt/beegfs/bachelor/groups/henning/users/miller/debris-discs'
 
 # Global settings
 M_earth = 5.9722e24 * 1e3  # [g]
@@ -16,6 +17,8 @@ def getDataDir(z):
         dataDir = localDir + '/sims/' + str(z)
     elif path.exists(localDirNew + '/' + str(z)):
         dataDir = localDirNew + '/' + str(z)
+    elif path.exists(slurmDir + '/sims/' + str(z)):
+        dataDir = slurmDir + '/sims/' + str(z)
     else:
         print("Output directory not found")
         exit()
