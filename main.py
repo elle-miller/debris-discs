@@ -93,15 +93,20 @@ def setInitConds(s, args, verbose):
     args: command line arguments
     verbose: bool
     """
+    alpha0 = args.alpha
+
     # Radial and mass grid
     s.ini.grid.rmin = c.au * 10
-    s.ini.grid.rmax = c.au * 400
+    s.ini.grid.rmax = c.au * 250
     s.ini.grid.Nr = args.Nr
-    s.ini.grid.mmax = 1e8
+    if alpha0 == 1e-3:
+        s.ini.grid.mmax = 10
+    else:
+        s.ini.grid.mmax = 1e8
+    print("mmax is ", s.ini.grid.mmax)
     s.makegrids()
 
     # Gas
-    alpha0 = args.alpha
     s.ini.gas.Mdisk = 0.1 * c.M_sun
     s.ini.gas.alpha = alpha0 * np.ones_like(s.grid.r)
 
@@ -119,7 +124,8 @@ def setInitConds(s, args, verbose):
     s.bump.addfield("currentPeakPos", args.iniBumpPeakPos * c.au)
     s.bump.addfield("f", args.bumpVelFactor)
     s.bump.addfield("timeStartMoving", args.timeStartMoving * c.year)
-    # s.bump.addfield("zeta", args.zeta)
+    s.bump.addfield("zeta", args.zeta)
+    s.bump.addfield("steep", args.steep)
     if not args.invertBump:
         s.bump.addfield("invert", 1)
     else:
@@ -273,6 +279,7 @@ if __name__ == "__main__":
     parser.add_argument('-4', action="store", dest="planForm", type=int, default="1", help="Planetesimal formation")
     parser.add_argument('-5', action="store", dest="d2g", type=float, default="0.01", help="Planetesimal formation")
     parser.add_argument('-6', action="store", dest="zeta", type=float, default="0.1", help="Planetesimal formation")
+    parser.add_argument('-7', action="store", dest="steep", type=float, default="0.03", help="Planetesimal formation")
     parser.add_argument('-i', action="store", dest="invertBump", type=int, default="0", help="Enter 1 to invert")
     arguments = parser.parse_args()
     main(arguments)

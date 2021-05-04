@@ -1,6 +1,6 @@
 #!/bin/bash -l
-#SBATCH --job-name=statNt150
-# SBATCH --partition=four-wks
+#SBATCH --job-name=ALL
+#SBATCH --partition=four-wks
 
 module load anaconda3
 module load openmpi-4.0.1
