@@ -1,5 +1,6 @@
 #!/bin/bash -l
 #SBATCH --job-name=widebelt
+#SBATCH --partition=four-wks
 
 module load anaconda3
 module load openmpi-4.0.1
@@ -15,4 +16,4 @@ source activate dustpy2
 # $7 - Start year power
 export OMP_NUM_THREADS=4
 
-srun python ./main.py -z "$1" -a 1e-"$2" -b "$3" -v "$4" -p "$5" -t "$6" -s "$7"
+srun python ./main.py -z "$1" -a 1e-"$2" -b "$3" -v "$4" -p "$5" -t "$6" -s "$7" -r "$8" -n "$9"
