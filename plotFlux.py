@@ -24,6 +24,8 @@ sdr_colors = [i for i in get_cmap('tab20').colors]
 M_earth = 5.9722e24 * 1e3  # [g]
 
 slurmDir = '/mnt/beegfs/bachelor/scratch/miller/dustpy2/debris-discs'
+slurmDir = '/mnt/beegfs/bachelor/groups/henning/users/miller/dustpy/debris-discs'
+
 localDir = getcwd()
 localDirNew = '/media/elle/Seagate Expansion Drive/MPIAResults'
 
@@ -51,6 +53,10 @@ def main(args):
     t = w.read.sequence('t') / c.year
     Nt = t.shape[0]
     R = w.read.sequence('grid.r') / c.au  # Radial grid cell centers [cm]
+    m = w.read.sequence('grid.m')
+    imax = m.shape[1]
+    print(imax)
+    print(m.shape)
     Nr = R.shape[1]
     rInt = w.read.sequence('grid.ri')  # Radial grid cell interfaces [cm]
     SigmaGas = w.read.sequence('gas.Sigma')
@@ -72,10 +78,12 @@ def main(args):
     # Text plotting
     RingDustTot = SigmaDustTot.copy()
     RingDiskMass = np.zeros(Nt)
-    if z <= 201:
-        [alpha0, amplitude, position] = getJobParams(z)
-    else:
-        position = 90
+
+    alpha0 = 1e-3
+    amplitude = 10
+    position = 90
+    minyear = 4e6
+    maxyear = max(t)
     iguess = (np.abs(R[0] - position)).argmin()
 
     # Obtain initial external dust
@@ -94,7 +102,6 @@ def main(args):
     centers = np.zeros(Nt)
     SigmaDustTotPeak = np.zeros(Nt)
     SigmaPlanPeak = np.zeros(Nt)
-    imax = 141
     v_bump = -4757.6  # cm/s  10 * c.au / c.year * 1e-6  # cm/s
 
     for i in range(Nt):
@@ -142,13 +149,13 @@ def main(args):
 
     lns1 = ax.semilogy(t * 1e-6, M_flux, color="C0", label=r"$\dot{M}_{\rm peb}$")
     lns2 = ax.semilogy(t * 1e-6, np.sum(M_plan, axis=1), color=sdr_colors[4], label=r"$\dot{M}_{\rm plan}$")
-    #lns3 = ax.semilogy([1, 2], [1e-10, 1e-10], ls='--', color=sdr_colors[5], label=r"min($\Sigma_{\rm plan}$)")
+    # lns3 = ax.semilogy([1, 2], [1e-10, 1e-10], ls='--', color=sdr_colors[5], label=r"min($\Sigma_{\rm plan}$)")
     #ax.vlines(4.7, 1e-10, 1e-3, ls='--', color=sdr_colors[5])
     # ax.vlines(6, 1e-10, 1e-3, ls='--', color=sdr_colors[5])
     # ax.hlines(mean_flux, minyear, maxyear, label="mean ")
     ax.set_xlim(1, 8)
     ax.set_ylim(1e-9, 1e-2)
-    filename = outputDir + "208mfluxplus1"
+    filename = outputDir + "117mflux"
     ax.set_xlabel("Time [Myr]")
     ax.set_ylabel("Mass rate [M$_\oplus$/yr]")
 
@@ -165,11 +172,10 @@ def main(args):
     e = getEPS(filename)
     p = getPNG(filename)
     plt.savefig(p["filename"], dpi=p["dpi"], bbox_inches=p["bbox"], pad_inches=p["pad"])
-    plt.savefig(e["filename"], dpi=p["dpi"], bbox_inches=p["bbox"], pad_inches=p["pad"])
-    if args.show:
-        plt.show()
+    plt.savefig(filename+".pdf", dpi=p["dpi"], bbox_inches=p["bbox"], pad_inches=p["pad"])
+    #if args.show:
+        #plt.show()
 
-    exit(0)
     fig, ax = plt.subplots()
     ax.loglog(t, predicted_sd, label="predicted")
     ax.loglog(t, SigmaPlanPeak, label="real plan")
@@ -181,7 +187,9 @@ def main(args):
     filename = "208sds"
     ax.set_xlabel("Time [Myr]")
     ax.set_ylabel("Surface density [g/cm²]")
-    plt.show()
+    plt.savefig(filename+".png", dpi=p["dpi"], bbox_inches=p["bbox"], pad_inches=p["pad"])
+    plt.savefig(filename+".pdf", dpi=p["dpi"], bbox_inches=p["bbox"], pad_inches=p["pad"])
+    #plt.show()
 
 
 if __name__ == "__main__":
