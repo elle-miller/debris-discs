@@ -1,5 +1,37 @@
 def getJobParams(outputDir):
 
+    # May21 final stationary scripts
+    alphaL = [1e-3, 1e-4]
+    amplitudeL = [3, 10]
+    posL = [30, 60, 90]
+    startingDir = 100
+    for i in alphaL:
+        for j in amplitudeL:
+            for k in posL:
+                if startingDir == outputDir:
+                    alpha = i
+                    amplitude = j
+                    pos = k
+                    return [alpha, amplitude, pos]
+                else:
+                    startingDir += 1
+
+    # May21 final moving scripts
+    alphaL = [1e-3, 1e-4]
+    amplitudeL = [3, 10]
+    posL = [10, 30, 100]
+    startingDir = 112
+    for i in alphaL:
+        for j in amplitudeL:
+            for k in posL:
+                if startingDir == outputDir:
+                    alpha = i
+                    amplitude = j
+                    pos = k
+                    return [alpha, amplitude, pos]
+                else:
+                    startingDir += 1
+
     if outputDir == 263:
         return [1e-3, 10, 100]
     # wide
