@@ -39,8 +39,33 @@ def main(args):
 
     # Overlay seaborn's styling with personal adjustments
     plt.style.use('seaborn-paper')
-    plt.style.use('tex')
+    # plt.style.use('tex')
     plt.rcParams["figure.figsize"] = width_inches, height_inches
+    # plt.rcParams["text.latex.preamble"] = \usepackage{upgreek}
+    plt.rcParams["axes.spines.left"] = True  # display axis spines
+    plt.rcParams["axes.spines.bottom"] = True
+    plt.rcParams["axes.spines.top"] = True
+    plt.rcParams["axes.spines.right"] = True
+    plt.rcParams["xtick.direction"] = 'in'
+    plt.rcParams["ytick.direction"] = 'in'
+    plt.rcParams["xtick.top"] = True
+    plt.rcParams["xtick.bottom"] = True
+    plt.rcParams["ytick.right"] = True
+    plt.rcParams["ytick.left"] = True
+    plt.rcParams["xtick.minor.visible"] = True
+    plt.rcParams["ytick.minor.visible"] = True
+    plt.rcParams["text.usetex"] = True
+    plt.rcParams["font.family"] = 'serif'
+    plt.rcParams["axes.labelsize"] = 14
+    plt.rcParams["font.size"] = 14
+    plt.rcParams["legend.fontsize"] = 14
+    plt.rcParams["xtick.labelsize"] = 14
+    plt.rcParams["ytick.labelsize"] = 14
+    plt.rcParams["legend.labelspacing"] = 0.2
+
+
+
+
     fig, ax = plt.subplots()
 
     # Read all data in the directory
