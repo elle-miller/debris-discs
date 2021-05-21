@@ -36,8 +36,29 @@ def main(args):
 
     # Overlay seaborn's styling with personal adjustments
     plt.style.use('seaborn-paper')
-    plt.style.use('tex')
+   # plt.style.use('tex')
     plt.rcParams["figure.figsize"] = width_inches, height_inches
+    plt.rcParams["axes.spines.left"] = True  # display axis spines
+    plt.rcParams["axes.spines.bottom"] = True
+    plt.rcParams["axes.spines.top"] = True
+    plt.rcParams["axes.spines.right"] = True
+    plt.rcParams["xtick.direction"] = 'in'
+    plt.rcParams["ytick.direction"] = 'in'
+    plt.rcParams["xtick.top"] = True
+    plt.rcParams["xtick.bottom"] = True
+    plt.rcParams["ytick.right"] = True
+    plt.rcParams["ytick.left"] = True
+    plt.rcParams["xtick.minor.visible"] = True
+    plt.rcParams["ytick.minor.visible"] = True
+    plt.rcParams["text.usetex"] = True
+    plt.rcParams["font.family"] = 'serif'
+    plt.rcParams["axes.labelsize"] = 14
+    plt.rcParams["font.size"] = 14
+    plt.rcParams["legend.fontsize"] = 14
+    plt.rcParams["xtick.labelsize"] = 14
+    plt.rcParams["ytick.labelsize"] = 14
+    plt.rcParams["legend.labelspacing"] = 0.2
+
 
     # Read all data in the directory
     outputDir = localDir + '/figplots/'
@@ -52,10 +73,11 @@ def main(args):
     else:
         dirs = [202, 203, 204, 206, 207, 208, 210, 211, 212, 214, 215, 216]
 
+    dirs = [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111]
     if args.sdr_stat:
         filename = outputDir + 'sdr_stat'
     elif args.mass_stat:
-        filename = outputDir + 'mass_stat4_percent'
+        filename = outputDir + 'mass_stat_new'
     elif args.dist_stat:
         filename = outputDir + 'dist_stat'
     elif args.sdr_mov:
