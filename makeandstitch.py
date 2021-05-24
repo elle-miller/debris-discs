@@ -46,24 +46,30 @@ def main(args):
         dirs = [184, 186, 186, 187, 188, 189, 193, 194, 195, 196, 197, 198]
         # dirs = [184, 185, 186, 187, 188, 189, 190, 191, 192, 196, 197, 198, 199, 200, 201]
         # dirs = [184, 185, 186, 187, 188, 189, 196, 197, 198]
+        dirs = [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111]
+
     else:
         dirs = [202, 203, 204, 206, 207, 208, 210, 211, 212, 214, 215, 216]
+        dirs = [112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123]
 
+    vert = 15
     if args.sdr_stat:
-        filename = outputDir + 'sdr_stat'
+        filename = outputDir + 'sdr_stat_new'
     elif args.mass_stat:
-        filename = outputDir + 'mass_stat'
+        filename = outputDir + 'mass_stat_new'
     elif args.dist_stat:
-        filename = outputDir + 'dist_stat'
+        vert = 13
+        filename = outputDir + 'dist_stat_new'
     elif args.sdr_mov:
-        filename = outputDir + 'sdr_mov'
+        filename = outputDir + 'sdr_mov_new'
     elif args.mass_mov:
-        filename = outputDir + 'mass_mov'
+        filename = outputDir + 'mass_mov_new'
     elif args.dist_mov:
-        filename = outputDir + 'dist_mov'
+        vert = 13
+        filename = outputDir + 'dist_mov_new'
     print("Writing...", filename)
     n = columns*rows
-    fig, ax = plt.subplots(rows, columns, sharex=True, sharey=True, figsize=(12, 15))
+    fig, ax = plt.subplots(rows, columns, sharex=True, sharey='row', figsize=(12, vert))
     i = 0
     for r in range(rows):
         for col in range(columns):
@@ -71,8 +77,15 @@ def main(args):
             w.datadir = getDataDir(dirs[i])
             # Surface density
             if args.sdr_stat | args.sdr_mov:
+                try:
+                    data = w.read.output(150)
+                except:
+                    try:
+                        data = w.read.output(145)
+                    except:
+                        i = i+1
+                        continue
                 Nt = np.size(w.read.sequence('t'))
-                data = w.read.output(Nt-1)
                 R = data.grid.r / c.au  # Radial grid cell centers [cm]
                 SigmaGas = data.gas.Sigma
                 SigmaDust = data.dust.Sigma  # Nr x Nm
@@ -199,9 +212,16 @@ def main(args):
                 # ax[r, col].text(0.04, 0.9, textstr, transform=ax[r, col].transAxes)
 
             elif args.dist_stat | args.dist_mov:
+                try:
+                    data = w.read.output(150)
+                except:
+                    try:
+                        data = w.read.output(145)
+                    except:
+                        i = i+1
+                        continue
                 t = w.read.sequence('t') / c.year
                 Nt = t.shape[0]
-                data = w.read.output(Nt - 1)
                 PlanMassEarth = data.planetesimals.M[-1] / M_earth
                 m = data.grid.m
                 R = data.grid.r
@@ -234,24 +254,29 @@ def main(args):
                 sg_max = np.ceil(np.log10(SigmaG.max()))
                 center, width, frac, istart, iend = getRingStats(SigmaPlan, w)
                 textstr = getText(PlanMassEarth, center, width, frac, justMass=True)
-                ax[r, col].text(0.04, 0.9, textstr, color="white", transform=ax[r, col].transAxes, fontweight='bold')
+                ax[r, col].text(0.04, 0.9, textstr, color="white", transform=ax[r, col].transAxes, weight='bold', fontweight='bold')
                 pltcmap = ax[r, col].contourf(R / c.au, m, np.log10(sigmaD.T), levels=np.linspace(sd_max - 6, sd_max, 7),
                                       cmap="magma", extend="both")
+                if i < 6:
+                    mmax = 10
+                else:
+                    mmax = 1e8
                 ax[r, col].contour(R / c.au, m, St.T, levels=[1.], colors="white", linewidths=2)
                 ax[r, col].contour(R / c.au, m, (St - St_dr[..., None]).T, levels=[0.], colors="C2", linewidths=1.5)
                 ax[r, col].contour(R / c.au, m, (St - St_fr[..., None]).T, levels=[0.], colors="C0", linewidths=1.5)
-                ax[r, col].axhline(m[-1], color="#AAAAAA", lw=1, ls="--")
-                ax[r, col].axvline(R[-1] / c.au, color="#AAAAAA", lw=1, ls="--")
-                ax[r, col].set_xlim(R[0] / c.au, 300)
-                ax[r, col].set_ylim(m[0], m[-1])
+                ax[r, col].set_xlim(13, 170)
+                ax[r, col].set_ylim(m[0], mmax)
                 ax[r, col].set_xscale("log")
                 ax[r, col].set_yscale("log")
-                ax[r, col].tick_params(axis='x')
-                ax[r, col].tick_params(axis='y')
+                ax[r, col].tick_params(axis='x', labelcolor='black', color='white', which='both')
+                ax[r, col].tick_params(axis='y', labelcolor='black', color='white', which='both')
                 ax[r, col].xaxis.set_minor_formatter(ScalarFormatter())
                 ax[r, col].xaxis.set_major_formatter(ScalarFormatter())
                 ax[r, col].xaxis.set_minor_formatter(("%.0f"))
                 ax[r, col].set_xticks([30, 60, 90, 150])
+
+                for spine in ax[r, col].spines.values():
+                       spine.set_edgecolor('white')
             i += 1
 
     # Saving figure
@@ -268,7 +293,7 @@ def main(args):
         fig.text(mid - sep, pos_height, r'$r_{\rm g}$ = 30 au', ha='center', va='center', fontsize=fontsize)
         fig.text(mid, pos_height, r'$r_{\rm g}$ = 60 au', ha='center', va='center', fontsize=fontsize)
         fig.text(mid + sep, pos_height, r'$r_{\rm g}$ = 90 au', ha='center', va='center', fontsize=fontsize)
-        fig.text(mid, title_height, "Stationary pressure trap evolved for 10 Myr", ha='center', va='center', fontsize=fontsize)
+        fig.text(mid, title_height, "Stationary gap evolved for 10 Myr", ha='center', va='center', fontsize=fontsize)
     else:
         fig.text(mid-sep, pos_height, r'$f = 10\%$', ha='center', va='center', fontsize=fontsize)
         fig.text(mid, pos_height, r'$f = 30\%$', ha='center', va='center', fontsize=fontsize)
@@ -292,8 +317,8 @@ def main(args):
         cbarcmap = plt.colorbar(pltcmap, ax=ax, fraction=0.05, aspect=70, pad=0.01)
         cbarcmap.ax.set_ylabel("$\log\ \sigma$ [g/cm²]")
     p = getPNG(filename)
-    plt.savefig(filename+'.png', dpi=300, bbox_inches=p["bbox"], pad_inches=0.01)
-    #plt.savefig(filename+'.eps', dpi=300)
+    plt.savefig(filename+'.png', dpi=300, bbox_inches=p["bbox"], pad_inches=0.02)
+    plt.savefig(filename+'.pdf', dpi=300, bbox_inches=p["bbox"], pad_inches=0.02)
     #plt.show()
 
 

@@ -1,12 +1,11 @@
 #!/bin/bash -l
-#SBATCH --job-name=basic1
-#SBATCH --mail-user elle.miller101@gmail.com
-#SBATCH --mail-type=ALL
 
-# Nothing new - control test
+startingDir=31
+alpha=3
+amplitude=10
+velocity=0
+position=90
+radialRes=240
+n=31
 
-module load anaconda3
-module load openmpi-4.0.1
-source activate dustpy2
-
-srun python ./mainBasic.py -z 84
+sbatch job.sh $startingDir $alpha $amplitude $velocity $position $n $radialRes

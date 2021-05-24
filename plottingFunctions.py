@@ -77,6 +77,8 @@ def getText(p, c1, w1, f1, justMass=False, initialExtDust=None):
     center = f"{c1:.0f}"
     width = f"{w1:.0f}"
     frac = f"{f1:.2f}"
+    if p < 1:
+        return textstr
     if w1 > 0.05 and not justMass:
         #textstr += r", $\Delta r$ = " + width + r" au, $r$ = " + center + r" au, $\Delta r/r$ = " + frac
         textstr += r", $\Delta r$ = " + width + r" au, $\Delta r/r$ = " + frac
@@ -102,6 +104,7 @@ def getRingStats(SigmaPlan, writer, verbose=False):
 
     maxPlan = np.max(SigmaPlan)
     thresholdPlan = 1e-3
+    thresholdPlan = maxPlan * 0.001
 
     # Loop through each radial bin, locating index positions of start and end ring
     for k in SigmaPlan:
@@ -119,23 +122,7 @@ def getRingStats(SigmaPlan, writer, verbose=False):
     if istartRingP != 0:
         # Left interface
         startRing = rInt[-1, istartRingP]
-        # startRing1 = R[-1, istartRingP-1]
-        # # Right hand side of bin, so +1
-        # endRing = rInt[-1, iendRingP + 1]
-        # endRing1 = R[-1, iendRingP]
-        # endRing2 = R[-1, iendRingP -1]
         endRing = rInt[-1, iendRingP]
-    # fig, ax = plt.subplots()
-    # ax.loglog(R[-1], SigmaPlan)
-    # ax.vlines(startRing, 1e-6, 1e3, 'k')
-    # ax.vlines(startRing1, 1e-6, 1e3, 'r')
-    # ax.vlines(endRing, 1e-6, 1e3, 'r')
-    # ax.vlines(endRing1, 1e-6, 1e3, 'g')
-    # ax.vlines(endRing2, 1e-6, 1e3, 'm')
-    # ax.vlines(endRing3, 1e-6, 1e3, 'k')
-    # ax.hlines(thresholdPlan, np.min(R), np.max(R))
-    # plt.show()
-    # exit(0)
 
     c1 = (endRing + startRing) / 2
     w1 = endRing - startRing
