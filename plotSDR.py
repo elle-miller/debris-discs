@@ -83,15 +83,14 @@ def main(args):
     # ax.vlines(19.6, 1e-10, 1e4)
     # ax.vlines(31, 1e-10, 1e4)
     # ax.vlines(50, 1e-10, 1e4)
-    ax.set_ylim(1.e-5, 1.e2)
+    ax.set_ylim(1e-5, 1e2)
     xmin = 10
     xmax = 200
-    xmax = 300
+    # xmax = 300
     ax.set_xlim(xmin, xmax)
     ax.set_xlabel("Distance from star [au]")
     ax.set_ylabel("Surface density [g/cm²]")
-    ax.legend()
-
+    ax.legend(loc='center left')
 
     if args.title:
         ax.set_title(titlestr, fontdict={'fontsize': fontsize})
@@ -108,6 +107,8 @@ def main(args):
     e = getEPS(filename)
     p = getPNG(filename)
     plt.savefig(p["filename"], dpi=300, bbox_inches=p["bbox"], pad_inches=p["pad"])
+    plt.savefig(filename+".pdf", dpi=300, bbox_inches=p["bbox"], pad_inches=p["pad"])
+
     # plt.savefig(e["filename"], dpi=300) #, bbox_inches=e["bbox"], pad_inches=e["pad"])
     if args.show:
         plt.show()
