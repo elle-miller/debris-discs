@@ -7,6 +7,7 @@ import numpy as np
 slurmDir = '/mnt/beegfs/bachelor/scratch/miller/dustpy2/debris-discs'
 localDir = '/media/elle/Seagate Backup Plus Drive/2020/mpia/debris-discs'
 localDirNew = '/media/elle/Seagate Expansion Drive/MPIAResults'
+slurmDir = '/mnt/beegfs/bachelor/groups/henning/users/miller/debris-discs'
 
 
 def main(args):
@@ -22,15 +23,6 @@ def main(args):
         return
 
     s = readdump(dataDir + '/frame.dmp')
-
-    s.addgroup("bump", description="Bump quantities")
-    s.bump.addfield("A", args.amplitude)
-    s.bump.addfield("width", args.width)
-    s.bump.addfield("iniPeakPos", args.iniBumpPeakPos * c.au)
-    s.bump.addfield("currentPeakPos", args.iniBumpPeakPos * c.au)
-    s.bump.addfield("f", args.bumpVelFactor)
-    s.bump.addfield("invert", args.invertBump)
-    s.bump.addfield("timeStartMoving", 0)
     s.run()
 
 
