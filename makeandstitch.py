@@ -43,7 +43,7 @@ def main(args):
     rows = 4
     columns = 3
     if args.sdr_stat | args.mass_stat | args.dist_stat:
-        dirs = [184, 186, 186, 187, 188, 189, 193, 194, 195, 196, 197, 198]
+        #dirs = [184, 186, 186, 187, 188, 189, 193, 194, 195, 196, 197, 198]
         # dirs = [184, 185, 186, 187, 188, 189, 190, 191, 192, 196, 197, 198, 199, 200, 201]
         # dirs = [184, 185, 186, 187, 188, 189, 196, 197, 198]
         dirs = [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111]
@@ -56,14 +56,14 @@ def main(args):
     if args.sdr_stat:
         filename = outputDir + 'sdr_stat_new'
     elif args.mass_stat:
-        filename = outputDir + 'mass_stat_new'
+        filename = outputDir + 'mass_stat_final'
     elif args.dist_stat:
         vert = 13
         filename = outputDir + 'dist_stat_new'
     elif args.sdr_mov:
         filename = outputDir + 'sdr_mov_new'
     elif args.mass_mov:
-        filename = outputDir + 'mass_mov_new'
+        filename = outputDir + 'mass_mov_final'
     elif args.dist_mov:
         vert = 13
         filename = outputDir + 'dist_mov_new'
@@ -81,7 +81,7 @@ def main(args):
                     data = w.read.output(150)
                 except:
                     try:
-                        data = w.read.output(145)
+                        data = w.read.output(144)
                     except:
                         i = i+1
                         continue
@@ -98,15 +98,15 @@ def main(args):
                 d2g_mid = rho_dust / rho_gas
                 center, width, frac, istart, iend = getRingStats(SigmaPlan, w)
                 textstr = getText(PlanMass[-1], center, width, frac)
-                ax[r, col].loglog(R, SigmaGas, label="Gas", color=sdr_colors[2])
-                ax[r, col].loglog(R, SigmaDustTot, label="Dust", color=sdr_colors[0])
+                ax[r, col].loglog(R, SigmaGas, label="Gas", color=sdr_colors[0])
+                ax[r, col].loglog(R, SigmaDustTot, label="Dust", color=sdr_colors[2])
                 ax[r, col].loglog(R, SigmaPlan, label="Planetesimals", color=sdr_colors[4])
                 ax[r, col].loglog(R, d2g_mid, color=sdr_colors[14], ls='-.', label=r"$\rho_d/\rho_g$", linewidth=1.2)
                 if col == (columns - 1) and r == 0:
                     ax[r, col].legend(loc='upper right', frameon=True)
                 ax[r, col].set_ylim(1.e-6, 1.e3)
-                ax[r, col].set_xlim(13, 170)
-                ax[r, col].text(0.04, 0.9, textstr, transform=ax[r, col].transAxes)
+                ax[r, col].set_xlim(10, 170)
+                ax[r, col].text(0.03, 0.91, textstr, transform=ax[r, col].transAxes)
                 ax[r, col].xaxis.set_minor_formatter(ScalarFormatter())
                 ax[r, col].xaxis.set_minor_formatter(("%.0f"))
                 for axis in [ax[r, col].xaxis]:
@@ -125,7 +125,9 @@ def main(args):
                                            axis=1) / M_earth
                 SigmaDust = w.read.sequence('dust.Sigma')  # Nt x Nr x Nm
                 SigmaDustTot = np.sum(SigmaDust, axis=2)  # Nt x Nr
-                DustMass = (np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * SigmaDustTot[:, :])
+                DustMass = (np.pi * (rInt[:, 1:] ** 2. - rInt[:, :-1] ** 2.) * SigmaDustTot[:, :]) # Nt x Nr
+                DustMassTot = np.sum(DustMass, axis=1)
+                # print(DustMassTot[-1] / M_earth)
                 DustDiskMassEarth = np.sum(DustMass, axis=1) / M_earth
                 PlanDiskMassEarth = w.read.sequence('planetesimals.M') / M_earth
                 SigmaPlan = w.read.sequence('planetesimals.Sigma')
@@ -163,10 +165,12 @@ def main(args):
                     d2g_mid_at_peak[k] = d2g_mid[k, ipeak]
                     if ipeak != igap:
                         RingDiskMass[k] = getRingMass(RingDustTot[k], istart, iend, w)
+                print(position, initialRightDustMass)
+
                 center, width, frac, ist, ien = getRingStats(SigmaPlan[-1], w)
                 textstr = getText(PlanDiskMassEarth[-1], center, width, frac, justMass=True, initialExtDust=initialRightDustMass)
                 ax[r, col].set_xlim(1.01e4, 1e7)
-                #ax[r, col].minorticks_on()
+                # ax[r, col].minorticks_on()
                 ax[r, col].set_yticks([1, 10, 100])
                 ax[r, col].set_ylim(1e0, 2e5)
                 lns1 = ax[r, col].loglog(t, GasDiskMassEarth, label="Gas", color=sdr_colors[2])
@@ -188,35 +192,12 @@ def main(args):
                     l = ax[r, col].legend(lns, labs, loc='upper right', frameon=True, framealpha=1.)
                     l.set_zorder(2000000)
 
-                # RingDiskMass = np.zeros(Nt)
-                # RingDustTot = SigmaDustTot.copy()
-                # for k in range(Nt):
-                #     igap = np.argmin(SigmaGas[k, 0:iguess + 10])
-                #     iguess = igap
-                #     ipeak = np.argmax(SigmaDustTot[k, igap:igap + 35]) + igap
-                #     dist = ipeak - igap
-                #     istart = int(ipeak - 0.5 * dist)
-                #     iend = int(ipeak + 0.5 * dist)
-                #     if ipeak != igap:
-                #         RingDiskMass[k] = getRingMass(RingDustTot[k], istart, iend, w)
-                # center, width, frac, ist, ien = getRingStats(SigmaPlan[-1], w)
-                # textstr = getText(PlanDiskMassEarth[-1], center, width, frac)
-                # ax[r, col].loglog(t, GasDiskMassEarth, label="Gas", color="C0")
-                # ax[r, col].loglog(t, DustDiskMassEarth, label="Dust", color="C1")
-                # ax[r, col].loglog(t, RingDiskMass, ls='--', label="Ring Dust", color="C4")
-                # ax[r, col].loglog(t, PlanDiskMassEarth, label="Planetesimals", color="C2")
-                # if col == (columns - 1) and r == 0:
-                #     ax[r, col].legend(loc='upper right', frameon=True)
-                # ax[r, col].set_xlim(1.01e4, 1e7)
-                # ax[r, col].set_ylim(1e0, 2e5)
-                # ax[r, col].text(0.04, 0.9, textstr, transform=ax[r, col].transAxes)
-
             elif args.dist_stat | args.dist_mov:
                 try:
                     data = w.read.output(150)
                 except:
                     try:
-                        data = w.read.output(145)
+                        data = w.read.output(144)
                     except:
                         i = i+1
                         continue
@@ -254,7 +235,7 @@ def main(args):
                 sg_max = np.ceil(np.log10(SigmaG.max()))
                 center, width, frac, istart, iend = getRingStats(SigmaPlan, w)
                 textstr = getText(PlanMassEarth, center, width, frac, justMass=True)
-                ax[r, col].text(0.04, 0.9, textstr, color="white", transform=ax[r, col].transAxes, weight='bold', fontweight='bold')
+                ax[r, col].text(0.03, 0.91, textstr, color="white", transform=ax[r, col].transAxes, weight='bold', fontweight='bold')
                 pltcmap = ax[r, col].contourf(R / c.au, m, np.log10(sigmaD.T), levels=np.linspace(sd_max - 6, sd_max, 7),
                                       cmap="magma", extend="both")
                 if i < 6:
