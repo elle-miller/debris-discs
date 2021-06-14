@@ -34,8 +34,28 @@ def main(args):
 
     # Overlay seaborn's styling with personal adjustments
     plt.style.use('seaborn-paper')
-    plt.style.use('tex')
+    # plt.style.use('tex')
     plt.rcParams["figure.figsize"] = width_inches, height_inches
+    plt.rcParams["axes.spines.left"] = True  # display axis spines
+    plt.rcParams["axes.spines.bottom"] = True
+    plt.rcParams["axes.spines.top"] = True
+    plt.rcParams["axes.spines.right"] = True
+    plt.rcParams["xtick.direction"] = 'in'
+    plt.rcParams["ytick.direction"] = 'in'
+    plt.rcParams["xtick.top"] = True
+    plt.rcParams["xtick.bottom"] = True
+    plt.rcParams["ytick.right"] = True
+    plt.rcParams["ytick.left"] = True
+    plt.rcParams["xtick.minor.visible"] = True
+    plt.rcParams["ytick.minor.visible"] = True
+    plt.rcParams["text.usetex"] = True
+    plt.rcParams["font.family"] = 'serif'
+    plt.rcParams["axes.labelsize"] = 14
+    plt.rcParams["font.size"] = 14
+    plt.rcParams["legend.fontsize"] = 14
+    plt.rcParams["xtick.labelsize"] = 14
+    plt.rcParams["ytick.labelsize"] = 14
+    plt.rcParams["legend.labelspacing"] = 0.2
 
     # Read all data in the directory
     outputDir = localDir + '/figplots/condensedcollages/'
@@ -173,11 +193,11 @@ def main(args):
                 # ax[r, col].minorticks_on()
                 ax[r, col].set_yticks([1, 10, 100])
                 ax[r, col].set_ylim(1e0, 2e5)
-                lns1 = ax[r, col].loglog(t, GasDiskMassEarth, label="Gas", color=sdr_colors[2])
+                lns1 = ax[r, col].loglog(t, GasDiskMassEarth, label="Gas", color=sdr_colors[0])
                 ax2 = ax[r, col].twinx()
                 lns5 = ax2.semilogx(t, d2g_mid_at_peak, '-.', linewidth=1.2, color=sdr_colors[14], zorder=2, label=r"$\rho_d/\rho_g(r_{\rm peak})$")
-                lns2 = ax[r, col].loglog(t, DustDiskMassEarth, label="Dust", color=sdr_colors[0])
-                lns3 = ax[r, col].loglog(t, RingDiskMass, ls='--', label="Ring Dust", color=sdr_colors[1])
+                lns2 = ax[r, col].loglog(t, DustDiskMassEarth, label="Dust", color=sdr_colors[2])
+                lns3 = ax[r, col].loglog(t, RingDiskMass, ls='--', label="Ring Dust", color=sdr_colors[3])
                 lns4 = ax[r, col].loglog(t, PlanDiskMassEarth, label="Planetesimals", color=sdr_colors[4])
                 t = ax2.text(0.04, 0.9, textstr, transform=ax[r, col].transAxes, zorder=1000)
                 t.set_bbox(dict(facecolor='white', alpha=0.9, edgecolor='white'))
