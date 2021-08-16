@@ -1,5 +1,5 @@
 #!/bin/bash -l
-#SBATCH --job-name=ALL
+#SBATCH --job-name=further
 #SBATCH --partition=four-wks
 
 module load anaconda3
