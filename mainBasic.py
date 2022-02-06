@@ -2,16 +2,8 @@
 # -*- coding: utf-8 -*-
 
 ###############################################################################
-# main.py
-# Author: Elle Miller
-# Main file for program to evolve a protoplanetary disc under initial conditions
-# To run:
-# python main.py -flag1 val1 -flag2 val2 etc.
-# Example script with dust evolution turned off
-# python main.py -e 1e4 -n 5 -3 1 -2 0
-
-# 82 just run plainly
-
+# mainBasic.py
+# Version of main.py but to run with the refined radial grid... unsure if I tested this. May have had problems
 try:
     from dustpy.simulation import Simulation
 except:
