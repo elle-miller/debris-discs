@@ -12,6 +12,10 @@ import functions as f
 import shutil
 from os import path
 
+"""
+I think this is the main.py equivalent but if you want to do the refined radial grid stuff
+"""
+
 
 s = Simulation()
 z = pars.z
