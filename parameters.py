@@ -1,5 +1,7 @@
 import dustpy.constants as c
 
+# file used for the alternate refined grid files: start.py, mainBasic.py
+
 z = 318  # directory
 Nr = 120
 
