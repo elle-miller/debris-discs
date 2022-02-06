@@ -6,6 +6,8 @@ import parameters as pars
 import dustpy.constants as c
 
 
+# function definitions for fns used in main.py
+
 def gap_width(s):
     """Function returns the gap width. Factor of pressure scale height
     at planet location."""
