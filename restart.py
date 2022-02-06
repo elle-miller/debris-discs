@@ -4,6 +4,9 @@ from dustpy import constants as c
 import argparse
 import numpy as np
 
+# This is a script that will restart your simulation if it stops running!! eg out of space or lost connection. Eg to restart from directory 22
+# $ python restart.py -z 22
+
 slurmDir = '/mnt/beegfs/bachelor/scratch/miller/dustpy2/debris-discs'
 localDir = '/media/elle/Seagate Backup Plus Drive/2020/mpia/debris-discs'
 localDirNew = '/media/elle/Seagate Expansion Drive/MPIAResults'
@@ -29,10 +32,5 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-z', action="store", dest="z", type=int, default=1, help="Simulation number")
-    parser.add_argument('-b', action="store", dest="amplitude", type=float, default=10, help="log(Amplitude)")
-    parser.add_argument('-w', action="store", dest="width", type=float, default=1., help="width factor")
-    parser.add_argument('-v', action="store", dest="bumpVelFactor", type=float, default=0, help="% of nominal")
-    parser.add_argument('-p', action="store", dest="iniBumpPeakPos", type=int, default=90, help="Starting center (AU)")
-    parser.add_argument('-i', action="store", dest="invertBump", type=int, default="1", help="Invert the gauss bump")
     arguments = parser.parse_args()
     main(arguments)
