@@ -1,7 +1,7 @@
 """
-Creating Wide Planetesimal Belts
-
 Authors: Elle Miller & Sebastian Marino (2021)
+
+Functions to move the bump and set initial distributions
 """
 
 import numpy as np
