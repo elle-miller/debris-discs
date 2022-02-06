@@ -1,5 +1,9 @@
 #!/bin/bash
 # Bash script file to rsync random directories all in separate terminals
+
+# IMPORTANT FILE THAT WILL SAVE LOADS OF TIME!!!!!!
+# Will download X number of directories at once so you don't have to run X commands
+
 start_time=$(date +%s.%N)
 pw=enterpasswordhere
 
