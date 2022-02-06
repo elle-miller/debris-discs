@@ -1,6 +1,8 @@
 from dustpy import constants as c
 import numpy as np
 
+# This file calculates the value of B from the paper
+
 # constants in SI
 au = 1.495978707e11
 k = 1.380649e-23
