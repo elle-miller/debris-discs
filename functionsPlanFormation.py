@@ -1,5 +1,6 @@
 """
-Creating Wide Planetesimal Belts
+
+Sets up rules for planetesimal formation. Mostly copied from DustPy except for the hyperbolic tangent code + boundaries.
 
 Author: Elle Miller & Sebastian Marino (2021)
 """
