@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 from dustpy import constants as c
 localDir = '/media/elle/Seagate Backup Plus Drive/2020/mpia/debris-discs'
 
+# This file prints the planetesimal surface density using the formula by Shibaike & ALibert (i think)
 
 M_earth = 5.9722e24 * 1e3  # [g]
 
