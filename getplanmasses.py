@@ -11,6 +11,12 @@ from plottingFunctions import *
 
 # cd /mnt/beegfs/bachelor/scratch/miller/dustpy2/debris-discs/
 
+
+# this can be run from where the data is stored. You can do $ python getplanmasses.py -z 100 -a 1 -t 1 to print
+# out the plan masses over time or just the final one in a text file
+
+# NOTE: I think this file is redundant as DustPy v2 has a way of reading Mass directly.
+
 # Global settings
 M_earth = 5.9722e24 * 1e3  # [g]
 
