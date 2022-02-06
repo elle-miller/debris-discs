@@ -2,7 +2,9 @@ import numpy as np
 from matplotlib import pyplot as plt
 localDir = '/media/elle/Seagate Backup Plus Drive/2020/mpia/debris-discs'
 from matplotlib.colors import LinearSegmentedColormap
-# Figure stuff
+
+# Plots Fig 1 from the paper
+
 width_inches = 6 # inches
 golden_ratio = 3/4
 height_inches = golden_ratio * width_inches
