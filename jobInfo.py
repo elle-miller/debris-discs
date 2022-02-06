@@ -1,3 +1,10 @@
+"""
+
+This file gets the job params (amplitude, alpha, pos, vel etc etc) for plotting
+can delete all my stuff and add your own
+but if you were running 12 jobs from directory 100-111 could use loops to generate params automatically etc.
+"""
+
 def getJobParams(outputDir):
 
     # May21 final stationary scripts
