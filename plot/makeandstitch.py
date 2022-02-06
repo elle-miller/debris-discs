@@ -17,6 +17,10 @@ from dustpy import hdf5writer as w
 from scipy.interpolate import interp1d
 from matplotlib.cm import get_cmap
 
+# the makeandstitch files get a bunch of data for surface density, mass etc and stitches 
+# the images together. I used these files to generate all the grid-images in the paper
+# Could be run like $ python makeandstitch.py -1 1 
+
 # Global settings
 M_earth = 5.9722e24 * 1e3  # [g]
 
